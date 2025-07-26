@@ -7,10 +7,12 @@ import (
 	"net"
 	"os"
 	"slices"
+	"sync/atomic"
 
 	"github.com/beevik/ntp"
 )
 
+// flags
 var (
 	network   = flag.String("network", "ip4", "network to use")
 	sloglevel slog.Level
@@ -38,6 +40,12 @@ func setupSlog() {
 		"sloglevel", sloglevel,
 	)
 }
+
+// error counts
+var (
+	dnsErrors      atomic.Int32
+	ntpQueryErrors atomic.Int32
+)
 
 type resolvedServerMessage struct {
 	serverName string
@@ -74,6 +82,7 @@ func findNTPServers(
 				"serverName", serverName,
 				"error", err,
 			)
+			dnsErrors.Add(1)
 			continue
 		}
 
@@ -115,6 +124,7 @@ func queryNTPServers(
 				"message", message,
 				"err", err,
 			)
+			ntpQueryErrors.Add(1)
 			continue
 		}
 
@@ -154,6 +164,8 @@ func main() {
 
 	slog.Info("after queryNTPServers",
 		"len(ntpServerResponses)", len(ntpServerResponses),
+		"dnsErrors", dnsErrors.Load(),
+		"ntpQueryErrors", ntpQueryErrors.Load(),
 	)
 
 	slices.SortFunc(
