@@ -159,11 +159,11 @@ func main() {
 	slices.SortFunc(
 		ntpServerResponses,
 		func(a, b ntpServerResponse) int {
-			return -cmp.Compare(a.ntpResponse.RTT, b.ntpResponse.RTT)
+			return -cmp.Compare(a.ntpResponse.RootDistance, b.ntpResponse.RootDistance)
 		},
 	)
 
-	slog.Info("after sort by RTT descending")
+	slog.Info("after sort by RootDistance descending")
 
 	for _, ntpServerResponse := range ntpServerResponses {
 		slog.Info("ntpServerResponse",
