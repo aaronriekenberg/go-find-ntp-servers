@@ -60,6 +60,8 @@ func findNTPServers(
 		"time3.facebook.com",
 		"time.apple.com",
 		"time.cloudflare.com",
+		"time.aws.com",
+		"time.windows.com",
 	}
 
 	for _, serverName := range serverNames {
