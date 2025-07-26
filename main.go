@@ -47,9 +47,10 @@ var (
 	ntpQueryErrors atomic.Int32
 )
 
+// fields are exported to work with slog
 type resolvedServerMessage struct {
-	serverName string
-	ipAddr     *net.IPAddr
+	ServerName string
+	IPAddr     *net.IPAddr
 }
 
 func findNTPServers(
@@ -92,16 +93,17 @@ func findNTPServers(
 		)
 
 		resolvedServerMessageChannel <- resolvedServerMessage{
-			serverName: serverName,
-			ipAddr:     ipAddr,
+			ServerName: serverName,
+			IPAddr:     ipAddr,
 		}
 	}
 }
 
+// fields are exported to work with slog
 type ntpServerResponse struct {
-	serverName  string
-	ipAddr      *net.IPAddr
-	ntpResponse *ntp.Response
+	ServerName  string
+	IPAddr      *net.IPAddr
+	NTPResponse *ntp.Response
 }
 
 func queryNTPServers(
@@ -116,7 +118,7 @@ func queryNTPServers(
 		)
 
 		response, err := ntp.Query(
-			message.ipAddr.IP.String(),
+			message.IPAddr.IP.String(),
 		)
 
 		if err != nil {
@@ -133,9 +135,9 @@ func queryNTPServers(
 		)
 
 		responses = append(responses, ntpServerResponse{
-			serverName:  message.serverName,
-			ipAddr:      message.ipAddr,
-			ntpResponse: response,
+			ServerName:  message.ServerName,
+			IPAddr:      message.IPAddr,
+			NTPResponse: response,
 		})
 	}
 
@@ -171,7 +173,7 @@ func main() {
 	slices.SortFunc(
 		ntpServerResponses,
 		func(a, b ntpServerResponse) int {
-			return -cmp.Compare(a.ntpResponse.RootDistance, b.ntpResponse.RootDistance)
+			return -cmp.Compare(a.NTPResponse.RootDistance, b.NTPResponse.RootDistance)
 		},
 	)
 
@@ -179,15 +181,15 @@ func main() {
 
 	for _, ntpServerResponse := range ntpServerResponses {
 		slog.Info("ntpServerResponse",
-			"serverName", ntpServerResponse.serverName,
-			"ipAddr", ntpServerResponse.ipAddr,
-			"stratum", ntpServerResponse.ntpResponse.Stratum,
-			"clockOffset", ntpServerResponse.ntpResponse.ClockOffset.String(),
-			"precision", ntpServerResponse.ntpResponse.Precision.String(),
-			"rootDelay", ntpServerResponse.ntpResponse.RootDelay.String(),
-			"rootDispersion", ntpServerResponse.ntpResponse.RootDispersion.String(),
-			"rootDistance", ntpServerResponse.ntpResponse.RootDistance.String(),
-			"rtt", ntpServerResponse.ntpResponse.RTT.String(),
+			"serverName", ntpServerResponse.ServerName,
+			"ipAddr", ntpServerResponse.IPAddr,
+			"stratum", ntpServerResponse.NTPResponse.Stratum,
+			"clockOffset", ntpServerResponse.NTPResponse.ClockOffset.String(),
+			"precision", ntpServerResponse.NTPResponse.Precision.String(),
+			"rootDelay", ntpServerResponse.NTPResponse.RootDelay.String(),
+			"rootDispersion", ntpServerResponse.NTPResponse.RootDispersion.String(),
+			"rootDistance", ntpServerResponse.NTPResponse.RootDistance.String(),
+			"rtt", ntpServerResponse.NTPResponse.RTT.String(),
 		)
 	}
 
