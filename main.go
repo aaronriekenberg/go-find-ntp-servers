@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	network   = flag.String("network", "udp", "network to use")
+	network   = flag.String("network", "ip4", "network to use")
 	sloglevel slog.Level
 )
 
@@ -49,8 +49,6 @@ func findNTPServers(
 ) {
 	defer close(resolvedServerMessageChannel)
 
-	const network = "ip4"
-
 	serverNames := []string{
 		"0.pool.ntp.org",
 		"1.pool.ntp.org",
@@ -70,7 +68,7 @@ func findNTPServers(
 			"network", network,
 		)
 
-		ipAddr, err := net.ResolveIPAddr(network, serverName)
+		ipAddr, err := net.ResolveIPAddr(*network, serverName)
 		if err != nil {
 			slog.Error("net.ResolveIPAddr error",
 				"serverName", serverName,
