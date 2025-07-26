@@ -115,6 +115,7 @@ func queryNTPServers(
 				"message", message,
 				"err", err,
 			)
+			continue
 		}
 
 		slog.Info("ntp.Query got response",
