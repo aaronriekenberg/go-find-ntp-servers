@@ -169,6 +169,7 @@ func main() {
 		slog.Info("ntpServerResponse",
 			"serverName", ntpServerResponse.serverName,
 			"ipAddr", ntpServerResponse.ipAddr,
+			"stratum", ntpServerResponse.ntpResponse.Stratum,
 			"clockOffset", ntpServerResponse.ntpResponse.ClockOffset.String(),
 			"precision", ntpServerResponse.ntpResponse.Precision.String(),
 			"rootDelay", ntpServerResponse.ntpResponse.RootDelay.String(),
