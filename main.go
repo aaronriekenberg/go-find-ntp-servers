@@ -135,9 +135,11 @@ func findNTPServers(
 				} else {
 					filteredIP = ip
 				}
-				resolvedServerMessageChannel <- resolvedServerMessage{
-					ServerName: serverName,
-					IPAddr:     filteredIP,
+				if filteredIP != nil {
+					resolvedServerMessageChannel <- resolvedServerMessage{
+						ServerName: serverName,
+						IPAddr:     filteredIP,
+					}
 				}
 			}
 		}()
