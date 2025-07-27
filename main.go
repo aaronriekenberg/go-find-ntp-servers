@@ -51,6 +51,24 @@ var (
 	ntpQueryErrors atomic.Int32
 )
 
+type semaphore chan struct{}
+
+func newSemaphore(permits int) semaphore {
+	s := make(chan struct{}, *maxParallelDNSRequests)
+	for range *maxParallelDNSRequests {
+		s <- struct{}{}
+	}
+	return s
+}
+
+func (s semaphore) acquire() {
+	<-s
+}
+
+func (s semaphore) release() {
+	s <- struct{}{}
+}
+
 // fields are exported to work with slog
 type resolvedServerMessage struct {
 	ServerName string
@@ -75,17 +93,17 @@ func findNTPServers(
 		"time.windows.com",
 	}
 
-	permits := make(chan struct{}, *maxParallelDNSRequests)
-	for range *maxParallelDNSRequests {
-		permits <- struct{}{}
-	}
+	permits := newSemaphore(*maxParallelDNSRequests)
 
 	var wg sync.WaitGroup
 
 	for _, serverName := range serverNames {
 		wg.Add(1)
 		go func() {
-			<-permits
+			permits.acquire()
+
+			defer wg.Done()
+			defer permits.release()
 
 			slog.Info("resolving server",
 				"serverName", serverName,
@@ -115,9 +133,6 @@ func findNTPServers(
 					}
 				}
 			}
-
-			permits <- struct{}{}
-			wg.Done()
 		}()
 	}
 
@@ -137,10 +152,7 @@ func queryNTPServers(
 
 	responseChannel := make(chan ntpServerResponse, *maxParallelNTPRequests)
 
-	queryPermits := make(chan struct{}, *maxParallelNTPRequests)
-	for range *maxParallelNTPRequests {
-		queryPermits <- struct{}{}
-	}
+	queryPermits := newSemaphore(*maxParallelNTPRequests)
 
 	var readResponsesWG sync.WaitGroup
 	readResponsesWG.Add(1)
@@ -155,7 +167,10 @@ func queryNTPServers(
 	for message := range resolvedServerMessageChannel {
 		queryWG.Add(1)
 		go func() {
-			<-queryPermits
+			queryPermits.acquire()
+
+			defer queryPermits.release()
+			defer queryWG.Done()
 
 			slog.Info("queryNTPServers received",
 				"message", message,
@@ -185,9 +200,6 @@ func queryNTPServers(
 					NTPResponse: response,
 				}
 			}
-
-			queryPermits <- struct{}{}
-			queryWG.Done()
 		}()
 	}
 
