@@ -86,6 +86,7 @@ func findNTPServers(
 		"2.pool.ntp.org",
 		"3.pool.ntp.org",
 		"time.google.com",
+		"time.facebook.com",
 		"time3.facebook.com",
 		"time.apple.com",
 		"time.cloudflare.com",
