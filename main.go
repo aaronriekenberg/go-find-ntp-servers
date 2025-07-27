@@ -160,9 +160,9 @@ func findNTPServers(
 
 var ipAddrToServerNames map[string]map[string]bool
 
-func checkForDuplicateNTPServerIPAddress(
+func isDuplicateServerAddress(
 	message resolvedServerMessage,
-) (duplicate bool) {
+) bool {
 	if ipAddrToServerNames == nil {
 		ipAddrToServerNames = make(map[string]map[string]bool)
 	}
@@ -182,9 +182,9 @@ func checkForDuplicateNTPServerIPAddress(
 			"serverNames", slices.Sorted(maps.Keys(ipAddrToServerNames[ipAddrString])),
 		)
 		foundDuplicateServerIP.Add(1)
-		duplicate = true
+		return true
 	}
-	return
+	return false
 }
 
 // fields are exported to work with slog
@@ -213,7 +213,7 @@ func queryNTPServers(
 
 	var queryWG sync.WaitGroup
 	for message := range resolvedServerMessageChannel {
-		if !checkForDuplicateNTPServerIPAddress(message) {
+		if isDuplicateServerAddress(message) {
 			continue
 		}
 
