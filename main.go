@@ -222,10 +222,6 @@ func main() {
 
 	slog.Info("after queryNTPServers",
 		"len(ntpServerResponses)", len(ntpServerResponses),
-		"dnsQueries", dnsQueries.Load(),
-		"dnsErrors", dnsErrors.Load(),
-		"ntpQueries", ntpQueries.Load(),
-		"ntpQueryErrors", ntpQueryErrors.Load(),
 	)
 
 	slices.SortFunc(
@@ -246,9 +242,15 @@ func main() {
 			"precision", ntpServerResponse.NTPResponse.Precision.String(),
 			"rootDelay", ntpServerResponse.NTPResponse.RootDelay.String(),
 			"rootDispersion", ntpServerResponse.NTPResponse.RootDispersion.String(),
-			"rootDistance", ntpServerResponse.NTPResponse.RootDistance.String(),
 			"rtt", ntpServerResponse.NTPResponse.RTT.String(),
+			"rootDistance", ntpServerResponse.NTPResponse.RootDistance.String(),
 		)
 	}
 
+	slog.Info("metrics",
+		"dnsQueries", dnsQueries.Load(),
+		"dnsErrors", dnsErrors.Load(),
+		"ntpQueries", ntpQueries.Load(),
+		"ntpQueryErrors", ntpQueryErrors.Load(),
+	)
 }
