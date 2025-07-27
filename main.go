@@ -46,10 +46,10 @@ func setupSlog() {
 
 // metrics
 var (
-	dnsQueries     atomic.Int32
-	dnsErrors      atomic.Int32
-	ntpQueries     atomic.Int32
-	ntpQueryErrors atomic.Int32
+	dnsQueries atomic.Int32
+	dnsErrors  atomic.Int32
+	ntpQueries atomic.Int32
+	ntpErrors  atomic.Int32
 )
 
 type semaphore chan struct{}
@@ -181,7 +181,7 @@ func queryNTPServers(
 			defer queryPermits.release()
 			defer queryWG.Done()
 
-			slog.Info("queryNTPServers received",
+			slog.Info("queryNTPServers received message",
 				"message", message,
 			)
 
@@ -196,12 +196,13 @@ func queryNTPServers(
 					"message", message,
 					"err", err,
 				)
-				ntpQueryErrors.Add(1)
+				ntpErrors.Add(1)
 
 				return
 			}
 
 			slog.Info("ntp.Query got response",
+				"message", message,
 				"response", response,
 			)
 
@@ -274,6 +275,6 @@ func main() {
 		"dnsQueries", dnsQueries.Load(),
 		"dnsErrors", dnsErrors.Load(),
 		"ntpQueries", ntpQueries.Load(),
-		"ntpQueryErrors", ntpQueryErrors.Load(),
+		"ntpQueryErrors", ntpErrors.Load(),
 	)
 }
