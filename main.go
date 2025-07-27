@@ -12,16 +12,18 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/beevik/ntp"
 )
 
 // flags
 var (
-	filterDNSToIPV4Only    = flag.Bool("filterDNSToIPV4Only", true, "filter DNS results to IPv4 only")
-	maxParallelDNSRequests = flag.Int("maxParallelDNSRequests", 16, "max parallel DNS requests")
-	maxParallelNTPRequests = flag.Int("maxParallelNTPRequests", 16, "max parallel NTP requests")
-	slogLevel              slog.Level
+	filterDNSToIPV4Only         = flag.Bool("filterDNSToIPV4Only", true, "filter DNS results to IPv4 only")
+	maxParallelDNSRequests      = flag.Int("maxParallelDNSRequests", 16, "max parallel DNS requests")
+	maxParallelNTPRequests      = flag.Int("maxParallelNTPRequests", 16, "max parallel NTP requests")
+	ntpQueryTimeoutMilliseconds = flag.Int64("ntpQueryTimeoutMilliseconds", 1_000, "NTP query timeout milliseconds")
+	slogLevel                   slog.Level
 )
 
 func parseFlags() {
@@ -237,8 +239,11 @@ func queryNTPServers(
 
 			ntpQueries.Add(1)
 
-			response, err := ntp.Query(
+			response, err := ntp.QueryWithOptions(
 				message.IPAddr.String(),
+				ntp.QueryOptions{
+					Timeout: time.Duration(*ntpQueryTimeoutMilliseconds) * time.Millisecond,
+				},
 			)
 
 			if err != nil {
