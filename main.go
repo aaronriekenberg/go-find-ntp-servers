@@ -16,8 +16,8 @@ import (
 // flags
 var (
 	filterDNSToIPV4Only    = flag.Bool("filterDNSToIPV4Only", true, "filter DNS results to IPv4 only")
-	maxParallelDNSRequests = flag.Int("maxParallelDNSRequests", 8, "max parallel DNS requests")
-	maxParallelNTPRequests = flag.Int("maxParallelNTPRequests", 8, "max parallel NTP requests")
+	maxParallelDNSRequests = flag.Int("maxParallelDNSRequests", 16, "max parallel DNS requests")
+	maxParallelNTPRequests = flag.Int("maxParallelNTPRequests", 16, "max parallel NTP requests")
 	slogLevel              slog.Level
 )
 
