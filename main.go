@@ -168,13 +168,16 @@ func isDuplicateServerAddress(
 	}
 
 	ipAddrString := message.IPAddr.String()
-	if ipAddrToServerNames[ipAddrString] == nil {
-		ipAddrToServerNames[ipAddrString] = make(map[string]bool)
+
+	serverNamesForIPAddr := ipAddrToServerNames[ipAddrString]
+	if serverNamesForIPAddr == nil {
+		serverNamesForIPAddr = make(map[string]bool)
+		ipAddrToServerNames[ipAddrString] = serverNamesForIPAddr
 	}
 
-	ipAddrToServerNames[ipAddrString][message.ServerName] = true
+	serverNamesForIPAddr[message.ServerName] = true
 
-	duplicateServerNamesForIPAddress := len(ipAddrToServerNames[ipAddrString])
+	duplicateServerNamesForIPAddress := len(serverNamesForIPAddr)
 	if duplicateServerNamesForIPAddress > 1 {
 		slog.Info("found duplicate server IP address",
 			"ipAddress", ipAddrString,
