@@ -118,7 +118,7 @@ func findNTPServers(
 			defer wg.Done()
 			defer querySemaphore.release()
 
-			slog.Info("resolving server",
+			slog.Debug("resolving server",
 				"serverName", serverName,
 			)
 
@@ -134,7 +134,7 @@ func findNTPServers(
 				return
 			}
 
-			slog.Info("findNTPServers resolved",
+			slog.Debug("findNTPServers resolved",
 				"server", serverName,
 				"addrs", addrs,
 			)
@@ -231,7 +231,7 @@ func queryNTPServers(
 			defer querySemaphore.release()
 			defer queryWG.Done()
 
-			slog.Info("queryNTPServers received message",
+			slog.Debug("queryNTPServers received message",
 				"message", message,
 			)
 
@@ -251,7 +251,7 @@ func queryNTPServers(
 				return
 			}
 
-			slog.Info("ntp.Query got response",
+			slog.Debug("ntp.Query got response",
 				"message", message,
 				"response", response,
 			)
