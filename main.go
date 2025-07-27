@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"flag"
 	"log/slog"
+	"maps"
 	"net"
 	"os"
 	"slices"
@@ -46,10 +47,13 @@ func setupSlog() {
 
 // metrics
 var (
-	dnsQueries atomic.Int32
-	dnsErrors  atomic.Int32
-	ntpQueries atomic.Int32
-	ntpErrors  atomic.Int32
+	dnsQueries              atomic.Int32
+	dnsErrors               atomic.Int32
+	dnsFilteredResults      atomic.Int32
+	dnsUnfilteredResults    atomic.Int32
+	foundDuplicateServerIPs atomic.Int32
+	ntpQueries              atomic.Int32
+	ntpErrors               atomic.Int32
 )
 
 type semaphore chan struct{}
@@ -138,7 +142,10 @@ func findNTPServers(
 				} else {
 					filteredIP = ip
 				}
-				if filteredIP != nil {
+				if filteredIP == nil {
+					dnsFilteredResults.Add(1)
+				} else {
+					dnsUnfilteredResults.Add(1)
 					resolvedServerMessageChannel <- resolvedServerMessage{
 						ServerName: serverName,
 						IPAddr:     filteredIP,
@@ -149,6 +156,35 @@ func findNTPServers(
 	}
 
 	wg.Wait()
+}
+
+var ipAddrToServerNames map[string]map[string]bool
+
+func checkForDuplicateNTPServerIPAddress(
+	message resolvedServerMessage,
+) bool {
+	if ipAddrToServerNames == nil {
+		ipAddrToServerNames = make(map[string]map[string]bool)
+	}
+
+	ipAddrString := message.IPAddr.String()
+	if ipAddrToServerNames[ipAddrString] == nil {
+		ipAddrToServerNames[ipAddrString] = make(map[string]bool)
+	}
+
+	ipAddrToServerNames[ipAddrString][message.ServerName] = true
+
+	duplicateServerNamesForIPAddress := len(ipAddrToServerNames[ipAddrString])
+	if duplicateServerNamesForIPAddress > 1 {
+		slog.Info("found duplicate server IP address",
+			"ipAddress", ipAddrString,
+			"duplicateServerNamesForIPAddress", duplicateServerNamesForIPAddress,
+			"serverNames", slices.Sorted(maps.Keys(ipAddrToServerNames[ipAddrString])),
+		)
+		foundDuplicateServerIPs.Add(1)
+		return true
+	}
+	return false
 }
 
 // fields are exported to work with slog
@@ -177,45 +213,48 @@ func queryNTPServers(
 
 	var queryWG sync.WaitGroup
 	for message := range resolvedServerMessageChannel {
-		queryWG.Add(1)
-		go func() {
-			querySemaphore.acquire()
+		if !checkForDuplicateNTPServerIPAddress(message) {
 
-			defer querySemaphore.release()
-			defer queryWG.Done()
+			queryWG.Add(1)
+			go func() {
+				querySemaphore.acquire()
 
-			slog.Info("queryNTPServers received message",
-				"message", message,
-			)
+				defer querySemaphore.release()
+				defer queryWG.Done()
 
-			ntpQueries.Add(1)
-
-			response, err := ntp.Query(
-				message.IPAddr.String(),
-			)
-
-			if err != nil {
-				slog.Error("ntp.Query error",
+				slog.Info("queryNTPServers received message",
 					"message", message,
-					"err", err,
 				)
-				ntpErrors.Add(1)
 
-				return
-			}
+				ntpQueries.Add(1)
 
-			slog.Info("ntp.Query got response",
-				"message", message,
-				"response", response,
-			)
+				response, err := ntp.Query(
+					message.IPAddr.String(),
+				)
 
-			responseChannel <- ntpServerResponse{
-				ServerName:  message.ServerName,
-				IPAddr:      message.IPAddr.String(),
-				NTPResponse: response,
-			}
+				if err != nil {
+					slog.Error("ntp.Query error",
+						"message", message,
+						"err", err,
+					)
+					ntpErrors.Add(1)
 
-		}()
+					return
+				}
+
+				slog.Info("ntp.Query got response",
+					"message", message,
+					"response", response,
+				)
+
+				responseChannel <- ntpServerResponse{
+					ServerName:  message.ServerName,
+					IPAddr:      message.IPAddr.String(),
+					NTPResponse: response,
+				}
+
+			}()
+		}
 	}
 
 	queryWG.Wait()
@@ -277,6 +316,9 @@ func main() {
 	slog.Info("metrics",
 		"dnsQueries", dnsQueries.Load(),
 		"dnsErrors", dnsErrors.Load(),
+		"dnsFilteredResults", dnsFilteredResults.Load(),
+		"dnsUnfilteredResults", dnsUnfilteredResults.Load(),
+		"foundDuplicateServerIPs", foundDuplicateServerIPs.Load(),
 		"ntpQueries", ntpQueries.Load(),
 		"ntpErrors", ntpErrors.Load(),
 	)
