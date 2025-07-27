@@ -95,17 +95,17 @@ func findNTPServers(
 		"time.windows.com",
 	}
 
-	permits := newSemaphore(*maxParallelDNSRequests)
+	querySemaphore := newSemaphore(*maxParallelDNSRequests)
 
 	var wg sync.WaitGroup
 
 	for _, serverName := range serverNames {
 		wg.Add(1)
 		go func() {
-			permits.acquire()
+			querySemaphore.acquire()
 
 			defer wg.Done()
-			defer permits.release()
+			defer querySemaphore.release()
 
 			slog.Info("resolving server",
 				"serverName", serverName,
@@ -161,7 +161,7 @@ func queryNTPServers(
 
 	responseChannel := make(chan ntpServerResponse, *maxParallelNTPRequests)
 
-	queryPermits := newSemaphore(*maxParallelNTPRequests)
+	querySemaphore := newSemaphore(*maxParallelNTPRequests)
 
 	var readResponsesWG sync.WaitGroup
 	readResponsesWG.Add(1)
@@ -176,9 +176,9 @@ func queryNTPServers(
 	for message := range resolvedServerMessageChannel {
 		queryWG.Add(1)
 		go func() {
-			queryPermits.acquire()
+			querySemaphore.acquire()
 
-			defer queryPermits.release()
+			defer querySemaphore.release()
 			defer queryWG.Done()
 
 			slog.Info("queryNTPServers received message",
