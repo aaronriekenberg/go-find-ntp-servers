@@ -54,8 +54,8 @@ var (
 type semaphore chan struct{}
 
 func newSemaphore(permits int) semaphore {
-	s := make(chan struct{}, *maxParallelDNSRequests)
-	for range *maxParallelDNSRequests {
+	s := make(chan struct{}, permits)
+	for range permits {
 		s <- struct{}{}
 	}
 	return s
