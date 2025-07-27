@@ -18,11 +18,11 @@ var (
 	filterDNSToIPV4Only    = flag.Bool("filterDNSToIPV4Only", true, "filter DNS results to IPv4 only")
 	maxParallelDNSRequests = flag.Int("maxParallelDNSRequests", 8, "max parallel DNS requests")
 	maxParallelNTPRequests = flag.Int("maxParallelNTPRequests", 8, "max parallel NTP requests")
-	sloglevel              slog.Level
+	slogLevel              slog.Level
 )
 
 func parseFlags() {
-	flag.TextVar(&sloglevel, "slogLevel", slog.LevelInfo, "slog level")
+	flag.TextVar(&slogLevel, "slogLevel", slog.LevelInfo, "slog level")
 
 	flag.Parse()
 }
@@ -33,14 +33,14 @@ func setupSlog() {
 			slog.NewJSONHandler(
 				os.Stdout,
 				&slog.HandlerOptions{
-					Level: sloglevel,
+					Level: slogLevel,
 				},
 			),
 		),
 	)
 
 	slog.Info("setupSlog",
-		"sloglevel", sloglevel,
+		"sloglevel", slogLevel,
 	)
 }
 
