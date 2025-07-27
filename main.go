@@ -55,6 +55,9 @@ var (
 type semaphore chan struct{}
 
 func newSemaphore(permits int) semaphore {
+	if permits < 1 {
+		panic("newSemaphore: permits must be >= 1")
+	}
 	s := make(chan struct{}, permits)
 	for range permits {
 		s <- struct{}{}
