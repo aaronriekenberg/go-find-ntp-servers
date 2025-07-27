@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"slices"
+	"sync"
 	"sync/atomic"
 
 	"github.com/beevik/ntp"
@@ -14,8 +15,10 @@ import (
 
 // flags
 var (
-	network   = flag.String("network", "ip4", "network to use")
-	sloglevel slog.Level
+	network                = flag.String("network", "ip4", "network to use")
+	maxParallelDNSRequests = flag.Int("maxParallelDNSRequests", 8, "max parallel DNS requests")
+	maxParallelNTPRequests = flag.Int("maxParallelNTPRequests", 8, "max parallel NTP requests")
+	sloglevel              slog.Level
 )
 
 func parseFlags() {
@@ -41,9 +44,11 @@ func setupSlog() {
 	)
 }
 
-// error counts
+// metrics
 var (
+	dnsQueries     atomic.Int32
 	dnsErrors      atomic.Int32
+	ntpQueries     atomic.Int32
 	ntpQueryErrors atomic.Int32
 )
 
@@ -71,32 +76,49 @@ func findNTPServers(
 		"time.windows.com",
 	}
 
-	for _, serverName := range serverNames {
-		slog.Info("resolving server",
-			"serverName", serverName,
-			"network", network,
-		)
-
-		ipAddr, err := net.ResolveIPAddr(*network, serverName)
-		if err != nil {
-			slog.Error("net.ResolveIPAddr error",
-				"serverName", serverName,
-				"error", err,
-			)
-			dnsErrors.Add(1)
-			continue
-		}
-
-		slog.Info("findNTPServers resolved",
-			"server", serverName,
-			"ipAddr", ipAddr,
-		)
-
-		resolvedServerMessageChannel <- resolvedServerMessage{
-			ServerName: serverName,
-			IPAddr:     ipAddr,
-		}
+	permits := make(chan struct{}, *maxParallelDNSRequests)
+	for range *maxParallelDNSRequests {
+		permits <- struct{}{}
 	}
+
+	var wg sync.WaitGroup
+
+	for _, serverName := range serverNames {
+		wg.Add(1)
+		go func() {
+			<-permits
+
+			slog.Info("resolving server",
+				"serverName", serverName,
+				"network", network,
+			)
+
+			dnsQueries.Add(1)
+			ipAddr, err := net.ResolveIPAddr(*network, serverName)
+			if err != nil {
+				slog.Error("net.ResolveIPAddr error",
+					"serverName", serverName,
+					"error", err,
+				)
+				dnsErrors.Add(1)
+			} else {
+				slog.Info("findNTPServers resolved",
+					"server", serverName,
+					"ipAddr", ipAddr,
+				)
+
+				resolvedServerMessageChannel <- resolvedServerMessage{
+					ServerName: serverName,
+					IPAddr:     ipAddr,
+				}
+			}
+
+			permits <- struct{}{}
+			wg.Done()
+		}()
+	}
+
+	wg.Wait()
 }
 
 // fields are exported to work with slog
@@ -108,38 +130,69 @@ type ntpServerResponse struct {
 
 func queryNTPServers(
 	resolvedServerMessageChannel chan resolvedServerMessage,
-) []ntpServerResponse {
+) (responses []ntpServerResponse) {
 
-	var responses []ntpServerResponse
+	responseChannel := make(chan ntpServerResponse, *maxParallelNTPRequests)
 
-	for message := range resolvedServerMessageChannel {
-		slog.Info("queryNTPServers received",
-			"message", message,
-		)
-
-		response, err := ntp.Query(
-			message.IPAddr.IP.String(),
-		)
-
-		if err != nil {
-			slog.Error("ntp.Query error",
-				"message", message,
-				"err", err,
-			)
-			ntpQueryErrors.Add(1)
-			continue
-		}
-
-		slog.Info("ntp.Query got response",
-			"response", response,
-		)
-
-		responses = append(responses, ntpServerResponse{
-			ServerName:  message.ServerName,
-			IPAddr:      message.IPAddr,
-			NTPResponse: response,
-		})
+	queryPermits := make(chan struct{}, *maxParallelNTPRequests)
+	for range *maxParallelNTPRequests {
+		queryPermits <- struct{}{}
 	}
+
+	var readResponsesWG sync.WaitGroup
+	readResponsesWG.Add(1)
+	go func() {
+		for response := range responseChannel {
+			responses = append(responses, response)
+		}
+		readResponsesWG.Done()
+	}()
+
+	var queryWG sync.WaitGroup
+	for message := range resolvedServerMessageChannel {
+		queryWG.Add(1)
+		go func() {
+			<-queryPermits
+
+			slog.Info("queryNTPServers received",
+				"message", message,
+			)
+
+			ntpQueries.Add(1)
+
+			response, err := ntp.Query(
+				message.IPAddr.IP.String(),
+			)
+
+			if err != nil {
+				slog.Error("ntp.Query error",
+					"message", message,
+					"err", err,
+				)
+				ntpQueryErrors.Add(1)
+			} else {
+
+				slog.Info("ntp.Query got response",
+					"response", response,
+				)
+
+				responseChannel <- ntpServerResponse{
+					ServerName:  message.ServerName,
+					IPAddr:      message.IPAddr,
+					NTPResponse: response,
+				}
+			}
+
+			queryPermits <- struct{}{}
+			queryWG.Done()
+		}()
+	}
+
+	queryWG.Wait()
+
+	close(responseChannel)
+
+	readResponsesWG.Wait()
 
 	return responses
 }
@@ -158,7 +211,7 @@ func main() {
 
 	setupSlog()
 
-	resolvedServerMessageChannel := make(chan resolvedServerMessage, 4)
+	resolvedServerMessageChannel := make(chan resolvedServerMessage, *maxParallelDNSRequests)
 
 	go findNTPServers(resolvedServerMessageChannel)
 
@@ -166,7 +219,9 @@ func main() {
 
 	slog.Info("after queryNTPServers",
 		"len(ntpServerResponses)", len(ntpServerResponses),
+		"dnsQueries", dnsQueries.Load(),
 		"dnsErrors", dnsErrors.Load(),
+		"ntpQueries", ntpQueries.Load(),
 		"ntpQueryErrors", ntpQueryErrors.Load(),
 	)
 
