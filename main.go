@@ -275,6 +275,6 @@ func main() {
 		"dnsQueries", dnsQueries.Load(),
 		"dnsErrors", dnsErrors.Load(),
 		"ntpQueries", ntpQueries.Load(),
-		"ntpQueryErrors", ntpErrors.Load(),
+		"ntpErrors", ntpErrors.Load(),
 	)
 }
