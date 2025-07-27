@@ -15,7 +15,6 @@ import (
 
 // flags
 var (
-	network                = flag.String("network", "ip4", "network to use")
 	maxParallelDNSRequests = flag.Int("maxParallelDNSRequests", 8, "max parallel DNS requests")
 	maxParallelNTPRequests = flag.Int("maxParallelNTPRequests", 8, "max parallel NTP requests")
 	sloglevel              slog.Level
@@ -55,7 +54,7 @@ var (
 // fields are exported to work with slog
 type resolvedServerMessage struct {
 	ServerName string
-	IPAddr     *net.IPAddr
+	IPAddr     net.IP
 }
 
 func findNTPServers(
@@ -90,13 +89,12 @@ func findNTPServers(
 
 			slog.Info("resolving server",
 				"serverName", serverName,
-				"network", network,
 			)
 
 			dnsQueries.Add(1)
-			ipAddr, err := net.ResolveIPAddr(*network, serverName)
+			addrs, err := net.LookupIP(serverName)
 			if err != nil {
-				slog.Error("net.ResolveIPAddr error",
+				slog.Error("net.LookupHost error",
 					"serverName", serverName,
 					"error", err,
 				)
@@ -104,12 +102,17 @@ func findNTPServers(
 			} else {
 				slog.Info("findNTPServers resolved",
 					"server", serverName,
-					"ipAddr", ipAddr,
+					"addrs", addrs,
 				)
 
-				resolvedServerMessageChannel <- resolvedServerMessage{
-					ServerName: serverName,
-					IPAddr:     ipAddr,
+				for _, ip := range addrs {
+					// filtering to ipv4 addresses
+					if ipv4 := ip.To4(); ipv4 != nil {
+						resolvedServerMessageChannel <- resolvedServerMessage{
+							ServerName: serverName,
+							IPAddr:     ipv4,
+						}
+					}
 				}
 			}
 
@@ -124,7 +127,7 @@ func findNTPServers(
 // fields are exported to work with slog
 type ntpServerResponse struct {
 	ServerName  string
-	IPAddr      *net.IPAddr
+	IPAddr      string
 	NTPResponse *ntp.Response
 }
 
@@ -161,7 +164,7 @@ func queryNTPServers(
 			ntpQueries.Add(1)
 
 			response, err := ntp.Query(
-				message.IPAddr.IP.String(),
+				message.IPAddr.String(),
 			)
 
 			if err != nil {
@@ -178,7 +181,7 @@ func queryNTPServers(
 
 				responseChannel <- ntpServerResponse{
 					ServerName:  message.ServerName,
-					IPAddr:      message.IPAddr,
+					IPAddr:      message.IPAddr.String(),
 					NTPResponse: response,
 				}
 			}
