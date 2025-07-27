@@ -117,19 +117,21 @@ func findNTPServers(
 					"error", err,
 				)
 				dnsErrors.Add(1)
-			} else {
-				slog.Info("findNTPServers resolved",
-					"server", serverName,
-					"addrs", addrs,
-				)
 
-				for _, ip := range addrs {
-					// filtering to ipv4 addresses
-					if ipv4 := ip.To4(); ipv4 != nil {
-						resolvedServerMessageChannel <- resolvedServerMessage{
-							ServerName: serverName,
-							IPAddr:     ipv4,
-						}
+				return
+			}
+
+			slog.Info("findNTPServers resolved",
+				"server", serverName,
+				"addrs", addrs,
+			)
+
+			for _, ip := range addrs {
+				// filtering to ipv4 addresses
+				if ipv4 := ip.To4(); ipv4 != nil {
+					resolvedServerMessageChannel <- resolvedServerMessage{
+						ServerName: serverName,
+						IPAddr:     ipv4,
 					}
 				}
 			}
@@ -188,18 +190,20 @@ func queryNTPServers(
 					"err", err,
 				)
 				ntpQueryErrors.Add(1)
-			} else {
 
-				slog.Info("ntp.Query got response",
-					"response", response,
-				)
-
-				responseChannel <- ntpServerResponse{
-					ServerName:  message.ServerName,
-					IPAddr:      message.IPAddr.String(),
-					NTPResponse: response,
-				}
+				return
 			}
+
+			slog.Info("ntp.Query got response",
+				"response", response,
+			)
+
+			responseChannel <- ntpServerResponse{
+				ServerName:  message.ServerName,
+				IPAddr:      message.IPAddr.String(),
+				NTPResponse: response,
+			}
+
 		}()
 	}
 
