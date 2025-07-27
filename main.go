@@ -7,7 +7,9 @@ import (
 	"maps"
 	"net"
 	"os"
+	"runtime/debug"
 	"slices"
+	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -272,6 +274,22 @@ func queryNTPServers(
 	return
 }
 
+func buildInfoMap() map[string]string {
+	buildInfoMap := make(map[string]string)
+
+	if buildInfo, ok := debug.ReadBuildInfo(); ok {
+		buildInfoMap["GoVersion"] = buildInfo.GoVersion
+		for _, setting := range buildInfo.Settings {
+			if strings.HasPrefix(setting.Key, "GO") ||
+				strings.HasPrefix(setting.Key, "vcs") {
+				buildInfoMap[setting.Key] = setting.Value
+			}
+		}
+	}
+
+	return buildInfoMap
+}
+
 func main() {
 	defer func() {
 		if err := recover(); err != nil {
@@ -285,6 +303,10 @@ func main() {
 	parseFlags()
 
 	setupSlog()
+
+	slog.Info("begin main",
+		"buildInfoMap", buildInfoMap(),
+	)
 
 	resolvedServerMessageChannel := make(chan resolvedServerMessage, *maxParallelDNSRequests)
 
