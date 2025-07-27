@@ -15,13 +15,14 @@ import (
 
 // flags
 var (
+	filterDNSToIPV4Only    = flag.Bool("filterDNSToIPV4Only", true, "filter DNS results to IPv4 only")
 	maxParallelDNSRequests = flag.Int("maxParallelDNSRequests", 8, "max parallel DNS requests")
 	maxParallelNTPRequests = flag.Int("maxParallelNTPRequests", 8, "max parallel NTP requests")
 	sloglevel              slog.Level
 )
 
 func parseFlags() {
-	flag.TextVar(&sloglevel, "sloglevel", slog.LevelInfo, "slog level")
+	flag.TextVar(&sloglevel, "slogLevel", slog.LevelInfo, "slog level")
 
 	flag.Parse()
 }
@@ -128,12 +129,15 @@ func findNTPServers(
 			)
 
 			for _, ip := range addrs {
-				// filtering to ipv4 addresses
-				if ipv4 := ip.To4(); ipv4 != nil {
-					resolvedServerMessageChannel <- resolvedServerMessage{
-						ServerName: serverName,
-						IPAddr:     ipv4,
-					}
+				var filteredIP net.IP
+				if *filterDNSToIPV4Only {
+					filteredIP = ip.To4()
+				} else {
+					filteredIP = ip
+				}
+				resolvedServerMessageChannel <- resolvedServerMessage{
+					ServerName: serverName,
+					IPAddr:     filteredIP,
 				}
 			}
 		}()
