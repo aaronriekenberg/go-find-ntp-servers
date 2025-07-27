@@ -197,7 +197,7 @@ func queryNTPServers(
 
 	readResponsesWG.Wait()
 
-	return responses
+	return
 }
 
 func main() {
