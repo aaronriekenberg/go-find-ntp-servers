@@ -56,6 +56,22 @@ var (
 	ntpErrors              atomic.Int32
 )
 
+func serverNames() []string {
+	return []string{
+		"0.pool.ntp.org",
+		"1.pool.ntp.org",
+		"2.pool.ntp.org",
+		"3.pool.ntp.org",
+		"time.google.com",
+		"time.facebook.com",
+		"time3.facebook.com",
+		"time.apple.com",
+		"time.cloudflare.com",
+		"time.aws.com",
+		"time.windows.com",
+	}
+}
+
 type semaphore chan struct{}
 
 func newSemaphore(permits int) semaphore {
@@ -88,25 +104,11 @@ func findNTPServers(
 ) {
 	defer close(resolvedServerMessageChannel)
 
-	serverNames := []string{
-		"0.pool.ntp.org",
-		"1.pool.ntp.org",
-		"2.pool.ntp.org",
-		"3.pool.ntp.org",
-		"time.google.com",
-		"time.facebook.com",
-		"time3.facebook.com",
-		"time.apple.com",
-		"time.cloudflare.com",
-		"time.aws.com",
-		"time.windows.com",
-	}
-
 	querySemaphore := newSemaphore(*maxParallelDNSRequests)
 
 	var wg sync.WaitGroup
 
-	for _, serverName := range serverNames {
+	for _, serverName := range serverNames() {
 		wg.Add(1)
 		go func() {
 			querySemaphore.acquire()
