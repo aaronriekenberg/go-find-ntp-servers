@@ -114,7 +114,7 @@ type resolvedServerMessage struct {
 }
 
 func findNTPServers(
-	resolvedServerMessageChannel chan resolvedServerMessage,
+	resolvedServerMessageChannel chan<- resolvedServerMessage,
 ) {
 	defer close(resolvedServerMessageChannel)
 
@@ -214,7 +214,7 @@ type ntpServerResponse struct {
 }
 
 func queryNTPServers(
-	resolvedServerMessageChannel chan resolvedServerMessage,
+	resolvedServerMessageChannel <-chan resolvedServerMessage,
 ) (responses []ntpServerResponse) {
 
 	responseChannel := make(chan ntpServerResponse, *maxParallelNTPRequests)
