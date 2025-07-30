@@ -236,8 +236,8 @@ func queryNTPServers(
 		go func() {
 			querySemaphore.acquire()
 
-			defer querySemaphore.release()
 			defer queryWG.Done()
+			defer querySemaphore.release()
 
 			slog.Debug("queryNTPServers received message",
 				"message", message,
