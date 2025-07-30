@@ -230,6 +230,8 @@ func queryNTPServers(
 		readResponsesWG.Done()
 	}()
 
+	ntpQueryTimeoutDuration := time.Duration(*ntpQueryTimeoutMilliseconds) * time.Millisecond
+
 	var queryWG sync.WaitGroup
 	for message := range resolvedServerMessageChannel {
 		if isDuplicateServerAddress(message) {
@@ -252,7 +254,7 @@ func queryNTPServers(
 			response, err := ntp.QueryWithOptions(
 				message.IPAddr.String(),
 				ntp.QueryOptions{
-					Timeout: time.Duration(*ntpQueryTimeoutMilliseconds) * time.Millisecond,
+					Timeout: ntpQueryTimeoutDuration,
 				},
 			)
 
