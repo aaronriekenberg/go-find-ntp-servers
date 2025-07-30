@@ -110,7 +110,7 @@ func (s semaphore) release() {
 // fields are exported to work with slog
 type resolvedServerMessage struct {
 	ServerName string
-	IPAddr     net.IP
+	IPAddr     string
 }
 
 func findNTPServers(
@@ -164,7 +164,7 @@ func findNTPServers(
 					dnsUnfilteredResults.Add(1)
 					resolvedServerMessageChannel <- resolvedServerMessage{
 						ServerName: serverName,
-						IPAddr:     filteredIP,
+						IPAddr:     filteredIP.String(),
 					}
 				}
 			}
@@ -183,7 +183,7 @@ func isDuplicateServerAddress(
 		ipAddrToServerNames = make(map[string]map[string]bool)
 	}
 
-	ipAddrString := message.IPAddr.String()
+	ipAddrString := message.IPAddr
 
 	serverNamesForIPAddr := ipAddrToServerNames[ipAddrString]
 	if serverNamesForIPAddr == nil {
@@ -252,7 +252,7 @@ func queryNTPServers(
 			ntpQueries.Add(1)
 
 			response, err := ntp.QueryWithOptions(
-				message.IPAddr.String(),
+				message.IPAddr,
 				ntp.QueryOptions{
 					Timeout: ntpQueryTimeoutDuration,
 				},
@@ -275,7 +275,7 @@ func queryNTPServers(
 
 			responseChannel <- ntpServerResponse{
 				ServerName:  message.ServerName,
-				IPAddr:      message.IPAddr.String(),
+				IPAddr:      message.IPAddr,
 				NTPResponse: response,
 			}
 
