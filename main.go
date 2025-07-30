@@ -198,7 +198,7 @@ func isDuplicateServerAddress(
 		slog.Info("found duplicate server IP address",
 			"ipAddress", ipAddrString,
 			"duplicateServerNamesForIPAddress", duplicateServerNamesForIPAddress,
-			"serverNames", slices.Sorted(maps.Keys(ipAddrToServerNames[ipAddrString])),
+			"serverNames", slices.Sorted(maps.Keys(serverNamesForIPAddr)),
 		)
 		foundDuplicateServerIP.Add(1)
 		return true
