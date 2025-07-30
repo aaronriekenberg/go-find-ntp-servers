@@ -17,6 +17,10 @@ import (
 	"github.com/beevik/ntp"
 )
 
+const (
+	ipAddressesPerServerName = 8
+)
+
 // flags
 var (
 	filterDNSToIPV4Only         = flag.Bool("filterDNSToIPV4Only", true, "filter DNS results to IPv4 only")
@@ -319,7 +323,7 @@ func main() {
 		"buildInfoMap", buildInfoMap(),
 	)
 
-	resolvedServerMessageChannel := make(chan resolvedServerMessage, *maxParallelDNSRequests)
+	resolvedServerMessageChannel := make(chan resolvedServerMessage, (*maxParallelDNSRequests)*ipAddressesPerServerName)
 
 	go findNTPServers(resolvedServerMessageChannel)
 
