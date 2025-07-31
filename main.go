@@ -291,6 +291,48 @@ func queryNTPServers(
 	return
 }
 
+func logResults(
+	ntpServerResponses []ntpServerResponse,
+) {
+
+	slog.Info("logResults",
+		"len(ntpServerResponses)", len(ntpServerResponses),
+	)
+
+	slices.SortFunc(
+		ntpServerResponses,
+		func(a, b ntpServerResponse) int {
+			return -cmp.Compare(a.NTPResponse.RootDistance, b.NTPResponse.RootDistance)
+		},
+	)
+
+	slog.Info("after sort by RootDistance descending")
+
+	for _, ntpServerResponse := range ntpServerResponses {
+		slog.Info("ntpServerResponse",
+			"serverName", ntpServerResponse.ServerName,
+			"ipAddr", ntpServerResponse.IPAddr,
+			"stratum", ntpServerResponse.NTPResponse.Stratum,
+			"clockOffset", ntpServerResponse.NTPResponse.ClockOffset.String(),
+			"precision", ntpServerResponse.NTPResponse.Precision.String(),
+			"rootDelay", ntpServerResponse.NTPResponse.RootDelay.String(),
+			"rootDispersion", ntpServerResponse.NTPResponse.RootDispersion.String(),
+			"rtt", ntpServerResponse.NTPResponse.RTT.String(),
+			"rootDistance", ntpServerResponse.NTPResponse.RootDistance.String(),
+		)
+	}
+
+	slog.Info("metrics",
+		"dnsQueries", dnsQueries.Load(),
+		"dnsErrors", dnsErrors.Load(),
+		"dnsFilteredResults", dnsFilteredResults.Load(),
+		"dnsUnfilteredResults", dnsUnfilteredResults.Load(),
+		"foundDuplicateServerIP", foundDuplicateServerIP.Load(),
+		"ntpQueries", ntpQueries.Load(),
+		"ntpErrors", ntpErrors.Load(),
+	)
+}
+
 func buildInfoMap() map[string]string {
 	buildInfoMap := make(map[string]string)
 
@@ -331,40 +373,5 @@ func main() {
 
 	ntpServerResponses := queryNTPServers(resolvedServerMessageChannel)
 
-	slog.Info("after queryNTPServers",
-		"len(ntpServerResponses)", len(ntpServerResponses),
-	)
-
-	slices.SortFunc(
-		ntpServerResponses,
-		func(a, b ntpServerResponse) int {
-			return -cmp.Compare(a.NTPResponse.RootDistance, b.NTPResponse.RootDistance)
-		},
-	)
-
-	slog.Info("after sort by RootDistance descending")
-
-	for _, ntpServerResponse := range ntpServerResponses {
-		slog.Info("ntpServerResponse",
-			"serverName", ntpServerResponse.ServerName,
-			"ipAddr", ntpServerResponse.IPAddr,
-			"stratum", ntpServerResponse.NTPResponse.Stratum,
-			"clockOffset", ntpServerResponse.NTPResponse.ClockOffset.String(),
-			"precision", ntpServerResponse.NTPResponse.Precision.String(),
-			"rootDelay", ntpServerResponse.NTPResponse.RootDelay.String(),
-			"rootDispersion", ntpServerResponse.NTPResponse.RootDispersion.String(),
-			"rtt", ntpServerResponse.NTPResponse.RTT.String(),
-			"rootDistance", ntpServerResponse.NTPResponse.RootDistance.String(),
-		)
-	}
-
-	slog.Info("metrics",
-		"dnsQueries", dnsQueries.Load(),
-		"dnsErrors", dnsErrors.Load(),
-		"dnsFilteredResults", dnsFilteredResults.Load(),
-		"dnsUnfilteredResults", dnsUnfilteredResults.Load(),
-		"foundDuplicateServerIP", foundDuplicateServerIP.Load(),
-		"ntpQueries", ntpQueries.Load(),
-		"ntpErrors", ntpErrors.Load(),
-	)
+	logResults(ntpServerResponses)
 }
