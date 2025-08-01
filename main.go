@@ -123,10 +123,10 @@ func findNTPServers(
 	var wg sync.WaitGroup
 
 	for _, serverName := range serverNames() {
+
+		querySemaphore.acquire()
 		wg.Add(1)
 		go func() {
-			querySemaphore.acquire()
-
 			defer wg.Done()
 			defer querySemaphore.release()
 
@@ -238,10 +238,9 @@ func queryNTPServers(
 			continue
 		}
 
+		querySemaphore.acquire()
 		queryWG.Add(1)
 		go func() {
-			querySemaphore.acquire()
-
 			defer queryWG.Done()
 			defer querySemaphore.release()
 
