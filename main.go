@@ -4,7 +4,6 @@ import (
 	"cmp"
 	"flag"
 	"log/slog"
-	"maps"
 	"net"
 	"os"
 	"runtime/debug"
@@ -174,31 +173,25 @@ func findNTPServers(
 	wg.Wait()
 }
 
-var ipAddrToServerNames map[string]map[string]bool
+var ipAddrToServerNames map[string][]string
 
 func isDuplicateServerAddress(
 	message resolvedServerMessage,
 ) bool {
 	if ipAddrToServerNames == nil {
-		ipAddrToServerNames = make(map[string]map[string]bool)
+		ipAddrToServerNames = make(map[string][]string)
 	}
 
-	ipAddrString := message.IPAddr
-
-	serverNamesForIPAddr := ipAddrToServerNames[ipAddrString]
-	if serverNamesForIPAddr == nil {
-		serverNamesForIPAddr = make(map[string]bool)
-		ipAddrToServerNames[ipAddrString] = serverNamesForIPAddr
-	}
-
-	serverNamesForIPAddr[message.ServerName] = true
+	serverNamesForIPAddr := ipAddrToServerNames[message.IPAddr]
+	serverNamesForIPAddr = append(serverNamesForIPAddr, message.ServerName)
+	ipAddrToServerNames[message.IPAddr] = serverNamesForIPAddr
 
 	duplicateServerNamesForIPAddress := len(serverNamesForIPAddr)
 	if duplicateServerNamesForIPAddress > 1 {
 		slog.Info("found duplicate server IP address",
-			"ipAddress", ipAddrString,
+			"ipAddress", message.IPAddr,
 			"duplicateServerNamesForIPAddress", duplicateServerNamesForIPAddress,
-			"serverNames", slices.Sorted(maps.Keys(serverNamesForIPAddr)),
+			"serverNames", serverNamesForIPAddr,
 		)
 		foundDuplicateServerIP.Add(1)
 		return true
