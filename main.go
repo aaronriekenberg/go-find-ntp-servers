@@ -173,17 +173,13 @@ func findNTPServers(
 	wg.Wait()
 }
 
-var ipAddrToServerNames map[string][]string
+var ipAddrToServerNames = make(map[string][]string)
 
 func isDuplicateServerAddress(
 	message resolvedServerMessage,
 ) bool {
-	if ipAddrToServerNames == nil {
-		ipAddrToServerNames = make(map[string][]string)
-	}
 
-	serverNamesForIPAddr := ipAddrToServerNames[message.IPAddr]
-	serverNamesForIPAddr = append(serverNamesForIPAddr, message.ServerName)
+	serverNamesForIPAddr := append(ipAddrToServerNames[message.IPAddr], message.ServerName)
 	ipAddrToServerNames[message.IPAddr] = serverNamesForIPAddr
 
 	duplicateServerNamesForIPAddress := len(serverNamesForIPAddr)
