@@ -151,12 +151,11 @@ func findNTPServers(
 			)
 
 			for _, ip := range addrs {
-				var filteredIP net.IP
+				filteredIP := ip
 				if *filterDNSToIPV4Only {
 					filteredIP = ip.To4()
-				} else {
-					filteredIP = ip
 				}
+
 				if filteredIP == nil {
 					dnsFilteredResults.Add(1)
 				} else {
