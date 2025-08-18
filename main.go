@@ -124,9 +124,7 @@ func findNTPServers(
 	for _, serverName := range serverNames() {
 
 		querySemaphore.acquire()
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			defer querySemaphore.release()
 
 			slog.Debug("resolving server",
@@ -166,7 +164,7 @@ func findNTPServers(
 					}
 				}
 			}
-		}()
+		})
 	}
 
 	wg.Wait()
@@ -210,13 +208,11 @@ func queryNTPServers(
 	querySemaphore := newSemaphore(*maxParallelNTPRequests)
 
 	var readResponsesWG sync.WaitGroup
-	readResponsesWG.Add(1)
-	go func() {
+	readResponsesWG.Go(func() {
 		for response := range responseChannel {
 			responses = append(responses, response)
 		}
-		readResponsesWG.Done()
-	}()
+	})
 
 	ntpQueryTimeoutDuration := time.Duration(*ntpQueryTimeoutMilliseconds) * time.Millisecond
 
@@ -227,9 +223,7 @@ func queryNTPServers(
 		}
 
 		querySemaphore.acquire()
-		queryWG.Add(1)
-		go func() {
-			defer queryWG.Done()
+		queryWG.Go(func() {
 			defer querySemaphore.release()
 
 			slog.Debug("queryNTPServers received message",
@@ -266,7 +260,7 @@ func queryNTPServers(
 				NTPResponse: response,
 			}
 
-		}()
+		})
 	}
 
 	queryWG.Wait()
