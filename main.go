@@ -121,6 +121,8 @@ func findNTPServers(
 
 	var wg sync.WaitGroup
 
+	defer wg.Wait()
+
 	for _, serverName := range serverNames() {
 
 		querySemaphore.acquire()
@@ -166,8 +168,6 @@ func findNTPServers(
 			}
 		})
 	}
-
-	wg.Wait()
 }
 
 var ipAddrToServerNames = make(map[string][]string)
