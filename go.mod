@@ -1,6 +1,6 @@
 module github.com/aaronriekenberg/go-find-ntp-servers
 
-go 1.25.0
+go 1.25.1
 
 require github.com/beevik/ntp v1.4.3
 
