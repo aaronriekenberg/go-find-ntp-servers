@@ -2,7 +2,7 @@ module github.com/aaronriekenberg/go-find-ntp-servers
 
 go 1.25.1
 
-require github.com/beevik/ntp v1.4.3
+require github.com/beevik/ntp v1.5.0
 
 require (
 	golang.org/x/net v0.44.0 // indirect
