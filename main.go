@@ -112,61 +112,69 @@ type resolvedServerMessage struct {
 	IPAddr     string
 }
 
-func findNTPServers(
-	resolvedServerMessageChannel chan<- resolvedServerMessage,
-) {
-	defer close(resolvedServerMessageChannel)
+func findNTPServers() <-chan resolvedServerMessage {
+	resolvedServerMessageChannel := make(
+		chan resolvedServerMessage,
+		(*maxParallelDNSRequests)*ipAddressesPerServerName,
+	)
 
-	querySemaphore := newSemaphore(*maxParallelDNSRequests)
+	go func() {
 
-	var wg sync.WaitGroup
+		defer close(resolvedServerMessageChannel)
 
-	defer wg.Wait()
+		querySemaphore := newSemaphore(*maxParallelDNSRequests)
 
-	for _, serverName := range serverNames() {
+		var queryWG sync.WaitGroup
 
-		querySemaphore.acquire()
-		wg.Go(func() {
-			defer querySemaphore.release()
+		defer queryWG.Wait()
 
-			slog.Debug("resolving server",
-				"serverName", serverName,
-			)
+		for _, serverName := range serverNames() {
 
-			dnsQueries.Add(1)
-			addrs, err := net.LookupIP(serverName)
-			if err != nil {
-				slog.Error("net.LookupHost error",
+			querySemaphore.acquire()
+			queryWG.Go(func() {
+				defer querySemaphore.release()
+
+				slog.Debug("resolving server",
 					"serverName", serverName,
-					"error", err,
 				)
-				dnsErrors.Add(1)
 
-				return
-			}
+				dnsQueries.Add(1)
+				addrs, err := net.LookupIP(serverName)
+				if err != nil {
+					slog.Error("net.LookupHost error",
+						"serverName", serverName,
+						"error", err,
+					)
+					dnsErrors.Add(1)
 
-			slog.Debug("findNTPServers resolved",
-				"server", serverName,
-				"addrs", addrs,
-			)
-
-			for _, ip := range addrs {
-				if *filterDNSToIPV4Only {
-					ip = ip.To4()
+					return
 				}
 
-				if ip == nil {
-					dnsFilteredResults.Add(1)
-				} else {
-					dnsUnfilteredResults.Add(1)
-					resolvedServerMessageChannel <- resolvedServerMessage{
-						ServerName: serverName,
-						IPAddr:     ip.String(),
+				slog.Debug("findNTPServers resolved",
+					"server", serverName,
+					"addrs", addrs,
+				)
+
+				for _, ip := range addrs {
+					if *filterDNSToIPV4Only {
+						ip = ip.To4()
+					}
+
+					if ip == nil {
+						dnsFilteredResults.Add(1)
+					} else {
+						dnsUnfilteredResults.Add(1)
+						resolvedServerMessageChannel <- resolvedServerMessage{
+							ServerName: serverName,
+							IPAddr:     ip.String(),
+						}
 					}
 				}
-			}
-		})
-	}
+			})
+		}
+	}()
+
+	return resolvedServerMessageChannel
 }
 
 var ipAddrToServerNames = make(map[string][]string)
@@ -347,9 +355,7 @@ func main() {
 		"buildInfoMap", buildInfoMap(),
 	)
 
-	resolvedServerMessageChannel := make(chan resolvedServerMessage, (*maxParallelDNSRequests)*ipAddressesPerServerName)
-
-	go findNTPServers(resolvedServerMessageChannel)
+	resolvedServerMessageChannel := findNTPServers()
 
 	ntpServerResponses := queryNTPServers(resolvedServerMessageChannel)
 
