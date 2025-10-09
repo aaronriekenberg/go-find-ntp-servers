@@ -177,26 +177,29 @@ func findNTPServers() <-chan resolvedServerMessage {
 	return resolvedServerMessageChannel
 }
 
-var ipAddrToServerNames = make(map[string][]string)
+func duplicateServerAddressCheck() func(resolvedServerMessage) bool {
 
-func isDuplicateServerAddress(
-	message resolvedServerMessage,
-) bool {
+	var ipAddrToServerNames = make(map[string][]string)
 
-	serverNamesForIPAddr := append(ipAddrToServerNames[message.IPAddr], message.ServerName)
-	ipAddrToServerNames[message.IPAddr] = serverNamesForIPAddr
+	return func(
+		message resolvedServerMessage,
+	) bool {
 
-	duplicateServerNamesForIPAddress := len(serverNamesForIPAddr)
-	if duplicateServerNamesForIPAddress > 1 {
-		slog.Info("found duplicate server IP address",
-			"ipAddress", message.IPAddr,
-			"duplicateServerNamesForIPAddress", duplicateServerNamesForIPAddress,
-			"serverNames", serverNamesForIPAddr,
-		)
-		foundDuplicateServerIP.Add(1)
-		return true
+		serverNamesForIPAddr := append(ipAddrToServerNames[message.IPAddr], message.ServerName)
+		ipAddrToServerNames[message.IPAddr] = serverNamesForIPAddr
+
+		duplicateServerNamesForIPAddress := len(serverNamesForIPAddr)
+		if duplicateServerNamesForIPAddress > 1 {
+			slog.Info("found duplicate server IP address",
+				"ipAddress", message.IPAddr,
+				"duplicateServerNamesForIPAddress", duplicateServerNamesForIPAddress,
+				"serverNames", serverNamesForIPAddr,
+			)
+			foundDuplicateServerIP.Add(1)
+			return true
+		}
+		return false
 	}
-	return false
 }
 
 // fields are exported to work with slog
@@ -222,6 +225,8 @@ func queryNTPServers(
 	})
 
 	ntpQueryTimeoutDuration := time.Duration(*ntpQueryTimeoutMilliseconds) * time.Millisecond
+
+	isDuplicateServerAddress := duplicateServerAddressCheck()
 
 	var queryWG sync.WaitGroup
 	for message := range resolvedServerMessageChannel {
