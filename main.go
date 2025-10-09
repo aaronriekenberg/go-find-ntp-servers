@@ -179,7 +179,7 @@ func findNTPServers() <-chan resolvedServerMessage {
 
 func duplicateServerAddressCheck() func(resolvedServerMessage) bool {
 
-	var ipAddrToServerNames = make(map[string][]string)
+	ipAddrToServerNames := make(map[string][]string)
 
 	return func(
 		message resolvedServerMessage,
