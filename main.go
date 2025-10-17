@@ -215,8 +215,6 @@ func queryNTPServers(
 
 	responseChannel := make(chan ntpServerResponse, *maxParallelNTPRequests)
 
-	querySemaphore := newSemaphore(*maxParallelNTPRequests)
-
 	var readResponsesWG sync.WaitGroup
 	readResponsesWG.Go(func() {
 		for response := range responseChannel {
@@ -227,6 +225,8 @@ func queryNTPServers(
 	ntpQueryTimeoutDuration := time.Duration(*ntpQueryTimeoutMilliseconds) * time.Millisecond
 
 	isDuplicateServerAddress := duplicateServerAddressCheck()
+
+	querySemaphore := newSemaphore(*maxParallelNTPRequests)
 
 	var queryWG sync.WaitGroup
 	for message := range resolvedServerMessageChannel {
