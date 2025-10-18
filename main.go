@@ -22,11 +22,11 @@ const (
 
 // flags
 var (
-	filterDNSToIPV4Only         = flag.Bool("filterDNSToIPV4Only", true, "filter DNS results to IPv4 only")
-	maxParallelDNSRequests      = flag.Int("maxParallelDNSRequests", 2, "max parallel DNS requests")
-	maxParallelNTPRequests      = flag.Int("maxParallelNTPRequests", 8, "max parallel NTP requests")
-	ntpQueryTimeoutMilliseconds = flag.Int("ntpQueryTimeoutMilliseconds", 1_000, "NTP query timeout milliseconds")
-	slogLevel                   slog.Level
+	filterDNSToIPV4Only    = flag.Bool("filterDNSToIPV4Only", true, "filter DNS results to IPv4 only")
+	maxParallelDNSRequests = flag.Int("maxParallelDNSRequests", 2, "max parallel DNS requests")
+	maxParallelNTPRequests = flag.Int("maxParallelNTPRequests", 8, "max parallel NTP requests")
+	ntpQueryTimeout        = flag.Duration("ntpQueryTimeout", 1*time.Second, "NTP query timeout duration")
+	slogLevel              slog.Level
 )
 
 func parseFlags() {
@@ -224,8 +224,6 @@ func queryNTPServers(
 		}
 	})
 
-	ntpQueryTimeoutDuration := time.Duration(*ntpQueryTimeoutMilliseconds) * time.Millisecond
-
 	isDuplicateServerAddress := duplicateServerAddressCheck()
 
 	querySemaphore := newSemaphore(*maxParallelNTPRequests)
@@ -249,7 +247,7 @@ func queryNTPServers(
 			response, err := ntp.QueryWithOptions(
 				message.IPAddr,
 				ntp.QueryOptions{
-					Timeout: ntpQueryTimeoutDuration,
+					Timeout: *ntpQueryTimeout,
 				},
 			)
 
