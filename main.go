@@ -53,14 +53,16 @@ func setupSlog() {
 }
 
 // metrics
+type atomicMetric = atomic.Uint64
+
 var (
-	dnsQueries             atomic.Int32
-	dnsErrors              atomic.Int32
-	dnsFilteredResults     atomic.Int32
-	dnsUnfilteredResults   atomic.Int32
-	foundDuplicateServerIP atomic.Int32
-	ntpQueries             atomic.Int32
-	ntpErrors              atomic.Int32
+	dnsQueries             atomicMetric
+	dnsErrors              atomicMetric
+	dnsFilteredResults     atomicMetric
+	dnsUnfilteredResults   atomicMetric
+	foundDuplicateServerIP atomicMetric
+	ntpQueries             atomicMetric
+	ntpErrors              atomicMetric
 )
 
 func serverNames() []string {
