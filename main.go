@@ -179,28 +179,28 @@ func findNTPServers() <-chan resolvedServerMessage {
 	return resolvedServerMessageChannel
 }
 
-func duplicateServerAddressCheck() func(resolvedServerMessage) bool {
+func duplicateServerAddressCheck() func(resolvedServerMessage) (duplicate bool) {
 
 	ipAddrToServerNames := make(map[string][]string)
 
 	return func(
 		message resolvedServerMessage,
-	) bool {
+	) (duplicate bool) {
 
 		serverNamesForIPAddr := append(ipAddrToServerNames[message.IPAddr], message.ServerName)
 		ipAddrToServerNames[message.IPAddr] = serverNamesForIPAddr
 
-		duplicateServerNamesForIPAddress := len(serverNamesForIPAddr)
-		if duplicateServerNamesForIPAddress > 1 {
+		numServerNamesForIPAddr := len(serverNamesForIPAddr)
+		if numServerNamesForIPAddr > 1 {
 			slog.Info("found duplicate server IP address",
 				"ipAddress", message.IPAddr,
-				"duplicateServerNamesForIPAddress", duplicateServerNamesForIPAddress,
+				"numServerNamesForIPAddr", numServerNamesForIPAddr,
 				"serverNames", serverNamesForIPAddr,
 			)
 			foundDuplicateServerIP.Add(1)
-			return true
+			duplicate = true
 		}
-		return false
+		return
 	}
 }
 
