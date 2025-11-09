@@ -85,6 +85,7 @@ func serverNames() []string {
 		"time.aws.com",
 		"time.windows.com",
 		"time.nist.gov",
+		"ntp.ubuntu.com",
 	}
 }
 
