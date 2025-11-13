@@ -132,7 +132,7 @@ func findNTPServers() <-chan resolvedServerMessage {
 
 		defer queryWG.Wait()
 
-		for _, serverName := range serverNames() {
+		for _, serverName := range serverNames {
 
 			querySemaphore.acquire()
 			queryWG.Go(func() {
