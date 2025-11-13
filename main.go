@@ -78,10 +78,10 @@ func readServerNames() []string {
 	_, err := toml.DecodeFile(serversFileName, &config)
 
 	if err != nil {
-		slog.Error("toml.DecodeFile error",
+		slog.Error("readServerNames: toml.DecodeFile error",
 			"error", err,
 		)
-		panic(fmt.Errorf("serverNames error: %w", err))
+		panic(fmt.Errorf("readServerNames: toml.DecodeFile error: %w", err))
 	}
 
 	return config.Servers
