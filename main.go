@@ -70,12 +70,12 @@ var (
 func readServerNames() []string {
 	const serversFileName = "servers.toml"
 
-	type servers struct {
+	type serverConfiguration struct {
 		Servers []string
 	}
 
-	var serverConfiguration servers
-	_, err := toml.DecodeFile(serversFileName, &serverConfiguration)
+	var config serverConfiguration
+	_, err := toml.DecodeFile(serversFileName, &config)
 
 	if err != nil {
 		slog.Error("toml.DecodeFile error",
@@ -84,7 +84,7 @@ func readServerNames() []string {
 		panic(fmt.Errorf("serverNames error: %w", err))
 	}
 
-	return serverConfiguration.Servers
+	return config.Servers
 }
 
 type semaphore chan struct{}
