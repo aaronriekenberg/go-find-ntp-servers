@@ -3,6 +3,7 @@ package main
 import (
 	"cmp"
 	"flag"
+	"fmt"
 	"log/slog"
 	"net"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/BurntSushi/toml"
 	"github.com/beevik/ntp"
 )
 
@@ -65,28 +67,24 @@ var (
 	ntpErrors              atomicMetric
 )
 
-func serverNames() []string {
-	return []string{
-		"0.pool.ntp.org",
-		"1.pool.ntp.org",
-		"2.pool.ntp.org",
-		"3.pool.ntp.org",
-		"time1.google.com",
-		"time2.google.com",
-		"time3.google.com",
-		"time4.google.com",
-		"time1.facebook.com",
-		"time2.facebook.com",
-		"time3.facebook.com",
-		"time4.facebook.com",
-		"time5.facebook.com",
-		"time.apple.com",
-		"time.cloudflare.com",
-		"time.aws.com",
-		"time.windows.com",
-		"time.nist.gov",
-		"ntp.ubuntu.com",
+func readServerNames() []string {
+	const serversFileName = "servers.toml"
+
+	type servers struct {
+		Servers []string
 	}
+
+	var serverConfiguration servers
+	_, err := toml.DecodeFile(serversFileName, &serverConfiguration)
+
+	if err != nil {
+		slog.Error("toml.DecodeFile error",
+			"error", err,
+		)
+		panic(fmt.Errorf("serverNames error: %w", err))
+	}
+
+	return serverConfiguration.Servers
 }
 
 type semaphore chan struct{}
@@ -117,6 +115,8 @@ type resolvedServerMessage struct {
 }
 
 func findNTPServers() <-chan resolvedServerMessage {
+	serverNames := readServerNames()
+
 	resolvedServerMessageChannel := make(
 		chan resolvedServerMessage,
 		(*maxParallelDNSRequests)*ipAddressesPerServerName,
