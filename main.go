@@ -7,6 +7,8 @@ import (
 	"log/slog"
 	"net"
 	"os"
+	"path"
+	"path/filepath"
 	"runtime/debug"
 	"slices"
 	"strings"
@@ -70,16 +72,25 @@ var (
 func readServerNames() []string {
 	const serversFileName = "servers.toml"
 
+	executablePath, err := os.Executable()
+	if err != nil {
+		panic(fmt.Errorf("readServerNames: os.Executable error: %w", err))
+	}
+	executableDirectory := filepath.Dir(executablePath)
+
+	serverFilePath := path.Join(executableDirectory, serversFileName)
+
+	slog.Info("readServerNames",
+		"serverFilePath", serverFilePath,
+	)
+
 	var serverConfig struct {
 		Servers []string
 	}
 
-	_, err := toml.DecodeFile(serversFileName, &serverConfig)
+	_, err = toml.DecodeFile(serverFilePath, &serverConfig)
 
 	if err != nil {
-		slog.Error("readServerNames: toml.DecodeFile error",
-			"error", err,
-		)
 		panic(fmt.Errorf("readServerNames: toml.DecodeFile error: %w", err))
 	}
 
