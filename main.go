@@ -80,7 +80,7 @@ func readServerNames() []string {
 
 	serverFilePath := path.Join(executableDirectory, serversFileName)
 
-	slog.Info("readServerNames",
+	slog.Debug("readServerNames",
 		"serverFilePath", serverFilePath,
 	)
 
