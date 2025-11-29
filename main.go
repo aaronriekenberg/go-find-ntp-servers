@@ -2,6 +2,7 @@ package main
 
 import (
 	"cmp"
+	"encoding/binary"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -296,6 +297,27 @@ func queryNTPServers(
 	return
 }
 
+func parseReferenceID(
+	ntpServerResponse ntpServerResponse,
+) (referenceIDString string) {
+
+	referenceIDBytes := binary.BigEndian.AppendUint32(nil, ntpServerResponse.NTPResponse.ReferenceID)
+
+	if ntpServerResponse.NTPResponse.Stratum <= 1 {
+		referenceIDString = string(referenceIDBytes)
+		return
+	}
+
+	if ip := net.IP(referenceIDBytes).To4(); ip != nil {
+		referenceIDString = ip.String()
+		return
+	}
+
+	referenceIDString = fmt.Sprintf("0x%08X", ntpServerResponse.NTPResponse.ReferenceID)
+	return
+
+}
+
 func logResults(
 	ntpServerResponses []ntpServerResponse,
 ) {
@@ -314,9 +336,11 @@ func logResults(
 	slog.Info("after sort by RootDistance descending")
 
 	for _, ntpServerResponse := range ntpServerResponses {
+
 		slog.Info("ntpServerResponse",
 			"serverName", ntpServerResponse.ServerName,
 			"ipAddr", ntpServerResponse.IPAddr,
+			"referenceIDString", parseReferenceID(ntpServerResponse),
 			"stratum", ntpServerResponse.NTPResponse.Stratum,
 			"clockOffset", ntpServerResponse.NTPResponse.ClockOffset.String(),
 			"precision", ntpServerResponse.NTPResponse.Precision.String(),
