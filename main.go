@@ -299,21 +299,22 @@ func queryNTPServers(
 
 func parseReferenceID(
 	ntpServerResponse ntpServerResponse,
-) (referenceIDString string) {
+) (rawString string, parsedString string) {
+
+	rawString = fmt.Sprintf("0x%08X", ntpServerResponse.NTPResponse.ReferenceID)
 
 	referenceIDBytes := binary.BigEndian.AppendUint32(nil, ntpServerResponse.NTPResponse.ReferenceID)
 
 	if ntpServerResponse.NTPResponse.Stratum <= 1 {
-		referenceIDString = string(referenceIDBytes)
+		parsedString = string(referenceIDBytes)
 		return
 	}
 
 	if ip := net.IP(referenceIDBytes).To4(); ip != nil {
-		referenceIDString = ip.String()
+		parsedString = ip.String()
 		return
 	}
 
-	referenceIDString = fmt.Sprintf("0x%08X", ntpServerResponse.NTPResponse.ReferenceID)
 	return
 
 }
@@ -337,11 +338,14 @@ func logResults(
 
 	for _, ntpServerResponse := range ntpServerResponses {
 
+		rawReferenceID, parsedReferenceID := parseReferenceID(ntpServerResponse)
+
 		slog.Info("ntpServerResponse",
 			"serverName", ntpServerResponse.ServerName,
 			"ipAddr", ntpServerResponse.IPAddr,
-			"referenceIDString", parseReferenceID(ntpServerResponse),
 			"stratum", ntpServerResponse.NTPResponse.Stratum,
+			"rawReferenceID", rawReferenceID,
+			"parsedReferenceID", parsedReferenceID,
 			"clockOffset", ntpServerResponse.NTPResponse.ClockOffset.String(),
 			"precision", ntpServerResponse.NTPResponse.Precision.String(),
 			"rootDelay", ntpServerResponse.NTPResponse.RootDelay.String(),
