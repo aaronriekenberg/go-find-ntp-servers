@@ -400,9 +400,5 @@ func main() {
 		"buildInfoMap", buildInfoMap(),
 	)
 
-	resolvedServerMessageChannel := findNTPServers()
-
-	ntpServerResponses := queryNTPServers(resolvedServerMessageChannel)
-
-	logResults(ntpServerResponses)
+	logResults(queryNTPServers(findNTPServers()))
 }
