@@ -61,13 +61,13 @@ func setupSlog() {
 type atomicMetric = atomic.Uint64
 
 var (
-	dnsQueries             atomicMetric
-	dnsErrors              atomicMetric
-	dnsFilteredResults     atomicMetric
-	dnsUnfilteredResults   atomicMetric
-	foundDuplicateServerIP atomicMetric
-	ntpQueries             atomicMetric
-	ntpErrors              atomicMetric
+	dnsQueries           atomicMetric
+	dnsErrors            atomicMetric
+	dnsFilteredResults   atomicMetric
+	dnsUnfilteredResults atomicMetric
+	duplicateServerIPs   atomicMetric
+	ntpQueries           atomicMetric
+	ntpErrors            atomicMetric
 )
 
 func readServerNames() []string {
@@ -210,7 +210,7 @@ func duplicateServerAddressCheck() func(resolvedServerMessage) (duplicate bool) 
 				"numServerNamesForIPAddr", numServerNamesForIPAddr,
 				"serverNames", serverNamesForIPAddr,
 			)
-			foundDuplicateServerIP.Add(1)
+			duplicateServerIPs.Add(1)
 			duplicate = true
 		}
 		return
@@ -360,7 +360,7 @@ func logResults(
 		"dnsErrors", dnsErrors.Load(),
 		"dnsFilteredResults", dnsFilteredResults.Load(),
 		"dnsUnfilteredResults", dnsUnfilteredResults.Load(),
-		"foundDuplicateServerIP", foundDuplicateServerIP.Load(),
+		"duplicateServerIPs", duplicateServerIPs.Load(),
 		"ntpQueries", ntpQueries.Load(),
 		"ntpErrors", ntpErrors.Load(),
 	)
