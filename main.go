@@ -77,9 +77,8 @@ func readServerNames() []string {
 	if err != nil {
 		panic(fmt.Errorf("readServerNames: os.Executable error: %w", err))
 	}
-	executableDirectory := filepath.Dir(executablePath)
 
-	serverFilePath := path.Join(executableDirectory, serversFileName)
+	serverFilePath := path.Join(filepath.Dir(executablePath), serversFileName)
 
 	slog.Debug("readServerNames",
 		"serverFilePath", serverFilePath,
