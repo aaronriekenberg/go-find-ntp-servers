@@ -7,7 +7,7 @@ Example:
 $ go-find-ntp-servers | tail -2 | jq
 
 {
-  "time": "2025-12-04T05:37:06.048627637-06:00",
+  "time": "2026-03-27T05:38:19.553329923-05:00",
   "level": "INFO",
   "msg": "ntpServerResponse",
   "serverName": "time3.facebook.com",
@@ -15,23 +15,23 @@ $ go-find-ntp-servers | tail -2 | jq
   "stratum": 1,
   "rawReferenceID": "0x4D535031",
   "parsedReferenceID": "MSP1",
-  "clockOffset": "11.992814ms",
+  "clockOffset": "303.003µs",
   "precision": "0s",
   "rootDelay": "0s",
   "rootDispersion": "15.259µs",
-  "rtt": "5.71137ms",
-  "rootDistance": "2.870944ms"
+  "rtt": "9.810333ms",
+  "rootDistance": "4.920425ms"
 }
 {
-  "time": "2025-12-04T05:37:06.048657383-06:00",
+  "time": "2026-03-27T05:38:19.553360765-05:00",
   "level": "INFO",
   "msg": "metrics",
   "dnsQueries": 19,
   "dnsErrors": 0,
   "dnsFilteredResults": 27,
   "dnsUnfilteredResults": 41,
-  "foundDuplicateServerIP": 1,
-  "ntpQueries": 40,
-  "ntpErrors": 1
+  "duplicateServerIPs": 0,
+  "ntpQueries": 41,
+  "ntpErrors": 0
 }
 ```
