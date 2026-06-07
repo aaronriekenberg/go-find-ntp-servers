@@ -4,8 +4,40 @@ Given a list of [NTP servers](ntp-servers.toml) or [NTS servers](nts-servers.tom
 
 Use `-queryNTS=true` to query servers with Network Time Security (NTS). The default is `false`.
 
-Example:
+Examples:
 ```
+$ ./go-find-ntp-servers | tail -2 | jq
+{
+  "time": "2026-06-07T15:27:36.584614441-05:00",
+  "level": "INFO",
+  "msg": "ntpServerResponse",
+  "serverName": "time3.facebook.com",
+  "ipAddr": "129.134.25.123",
+  "stratum": 1,
+  "rawReferenceID": "0x4D535031",
+  "parsedReferenceID": "MSP1",
+  "clockOffset": "-1.292511ms",
+  "precision": "0s",
+  "rootDelay": "0s",
+  "rootDispersion": "15.259µs",
+  "rtt": "9.908813ms",
+  "rootDistance": "4.969665ms",
+  "usedNTS": false
+}
+{
+  "time": "2026-06-07T15:27:36.584626122-05:00",
+  "level": "INFO",
+  "msg": "metrics",
+  "dnsQueries": 19,
+  "dnsErrors": 0,
+  "dnsFilteredResults": 26,
+  "dnsUnfilteredResults": 41,
+  "duplicateServerIPs": 0,
+  "duplicateNTSServerNames": 0,
+  "ntpQueries": 41,
+  "ntpErrors": 0
+}
+
 $ go-find-ntp-servers -queryNTS=true | tail -2 | jq
 {
   "time": "2026-06-07T15:26:05.150722498-05:00",
