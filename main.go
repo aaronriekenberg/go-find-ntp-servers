@@ -19,6 +19,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/beevik/ntp"
+	"github.com/beevik/nts"
 )
 
 const (
@@ -31,6 +32,7 @@ var (
 	maxParallelDNSRequests = flag.Int("maxParallelDNSRequests", 2, "max parallel DNS requests")
 	maxParallelNTPRequests = flag.Int("maxParallelNTPRequests", 8, "max parallel NTP requests")
 	ntpQueryTimeout        = flag.Duration("ntpQueryTimeout", 1*time.Second, "NTP query timeout duration")
+	queryNTS               = flag.Bool("queryNTS", false, "query servers using NTS")
 	slogLevel              slog.Level
 )
 
@@ -237,11 +239,22 @@ func queryNTPServers(
 	})
 
 	isDuplicateServerAddress := duplicateServerAddressCheck()
+	var seenServerNames map[string]struct{}
+	if *queryNTS {
+		seenServerNames = make(map[string]struct{})
+	}
 
 	querySemaphore := newSemaphore(*maxParallelNTPRequests)
 
 	var queryWG sync.WaitGroup
 	for message := range resolvedServerMessageChannel {
+		if *queryNTS {
+			if _, found := seenServerNames[message.ServerName]; found {
+				continue
+			}
+			seenServerNames[message.ServerName] = struct{}{}
+		}
+
 		if isDuplicateServerAddress(message) {
 			continue
 		}
@@ -256,17 +269,40 @@ func queryNTPServers(
 
 			ntpQueries.Add(1)
 
-			response, err := ntp.QueryWithOptions(
-				message.IPAddr,
-				ntp.QueryOptions{
-					Timeout: *ntpQueryTimeout,
-				},
+			var (
+				response *ntp.Response
+				err      error
 			)
 
+			if *queryNTS {
+				ntsSession, err := nts.NewSession(message.ServerName)
+				if err != nil {
+					slog.Error("nts.NewSession error",
+						"message", message,
+						"err", err,
+					)
+					ntpErrors.Add(1)
+					return
+				}
+				response, err = ntsSession.QueryWithOptions(
+					&ntp.QueryOptions{
+						Timeout: *ntpQueryTimeout,
+					},
+				)
+			} else {
+				response, err = ntp.QueryWithOptions(
+					message.IPAddr,
+					ntp.QueryOptions{
+						Timeout: *ntpQueryTimeout,
+					},
+				)
+			}
+
 			if err != nil {
-				slog.Error("ntp.Query error",
+				slog.Error("NTP query error",
 					"message", message,
 					"err", err,
+					"queryNTS", *queryNTS,
 				)
 				ntpErrors.Add(1)
 
