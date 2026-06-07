@@ -1,6 +1,6 @@
 # go-find-ntp-servers
 
-Given a [list of NTP server names](servers.toml), find the server having the lowest [Root Distance](https://datatracker.ietf.org/doc/html/rfc5905#appendix-A.5.5.2)
+Given a [NTP server names](ntp-servers.toml), or [NTS server names](nts-servers.toml) find the server having the lowest [Root Distance](https://datatracker.ietf.org/doc/html/rfc5905#appendix-A.5.5.2)
 
 Use `-queryNTS=true` to query servers with Network Time Security (NTS). The default is `false`.
 

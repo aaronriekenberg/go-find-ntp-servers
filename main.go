@@ -63,24 +63,31 @@ func setupSlog() {
 type atomicMetric = atomic.Uint64
 
 var (
-	dnsQueries           atomicMetric
-	dnsErrors            atomicMetric
-	dnsFilteredResults   atomicMetric
-	dnsUnfilteredResults atomicMetric
-	duplicateServerIPs   atomicMetric
-	ntpQueries           atomicMetric
-	ntpErrors            atomicMetric
+	dnsQueries              atomicMetric
+	dnsErrors               atomicMetric
+	dnsFilteredResults      atomicMetric
+	dnsUnfilteredResults    atomicMetric
+	duplicateServerIPs      atomicMetric
+	duplicateNTSServerNames atomicMetric
+	ntpQueries              atomicMetric
+	ntpErrors               atomicMetric
 )
 
 func readServerNames() []string {
-	const serversFileName = "servers.toml"
+	const ntpServersFileName = "ntp-servers.toml"
+	const ntsServersFileName = "nts-servers.toml"
 
 	executablePath, err := os.Executable()
 	if err != nil {
 		panic(fmt.Errorf("readServerNames: os.Executable error: %w", err))
 	}
 
-	serverFilePath := path.Join(filepath.Dir(executablePath), serversFileName)
+	var serverFilePath string
+	if *queryNTS {
+		serverFilePath = path.Join(filepath.Dir(executablePath), ntsServersFileName)
+	} else {
+		serverFilePath = path.Join(filepath.Dir(executablePath), ntpServersFileName)
+	}
 
 	slog.Debug("readServerNames",
 		"serverFilePath", serverFilePath,
@@ -218,11 +225,34 @@ func duplicateServerAddressCheck() func(resolvedServerMessage) (duplicate bool) 
 	}
 }
 
+func duplicateNTSServerNamesCheck() func(resolvedServerMessage) (duplicate bool) {
+
+	seenNTSServerNames := make(map[string]bool)
+
+	return func(
+		message resolvedServerMessage,
+	) (duplicate bool) {
+
+		if found := seenNTSServerNames[message.ServerName]; found {
+			slog.Info("found duplicate NTS server name",
+				"serverName", message.ServerName,
+				"ipAddr", message.IPAddr,
+			)
+			duplicateNTSServerNames.Add(1)
+			duplicate = true
+		} else {
+			seenNTSServerNames[message.ServerName] = true
+		}
+		return
+	}
+}
+
 // fields are exported to work with slog
 type ntpServerResponse struct {
 	ServerName  string
 	IPAddr      string
 	NTPResponse *ntp.Response
+	UsedNTS     bool
 }
 
 func queryNTPServers(
@@ -239,20 +269,14 @@ func queryNTPServers(
 	})
 
 	isDuplicateServerAddress := duplicateServerAddressCheck()
-	var seenServerNames map[string]struct{}
-	if *queryNTS {
-		seenServerNames = make(map[string]struct{})
-	}
+	isDuplicateNTSServerName := duplicateNTSServerNamesCheck()
 
 	querySemaphore := newSemaphore(*maxParallelNTPRequests)
 
 	var queryWG sync.WaitGroup
 	for message := range resolvedServerMessageChannel {
-		if *queryNTS {
-			if _, found := seenServerNames[message.ServerName]; found {
-				continue
-			}
-			seenServerNames[message.ServerName] = struct{}{}
+		if *queryNTS && isDuplicateNTSServerName(message) {
+			continue
 		}
 
 		if isDuplicateServerAddress(message) {
@@ -318,6 +342,7 @@ func queryNTPServers(
 				ServerName:  message.ServerName,
 				IPAddr:      message.IPAddr,
 				NTPResponse: response,
+				UsedNTS:     *queryNTS,
 			}
 
 		})
@@ -387,6 +412,7 @@ func logResults(
 			"rootDispersion", ntpServerResponse.NTPResponse.RootDispersion.String(),
 			"rtt", ntpServerResponse.NTPResponse.RTT.String(),
 			"rootDistance", ntpServerResponse.NTPResponse.RootDistance.String(),
+			"usedNTS", ntpServerResponse.UsedNTS,
 		)
 	}
 
@@ -396,6 +422,7 @@ func logResults(
 		"dnsFilteredResults", dnsFilteredResults.Load(),
 		"dnsUnfilteredResults", dnsUnfilteredResults.Load(),
 		"duplicateServerIPs", duplicateServerIPs.Load(),
+		"duplicateNTSServerNames", duplicateNTSServerNames.Load(),
 		"ntpQueries", ntpQueries.Load(),
 		"ntpErrors", ntpErrors.Load(),
 	)
