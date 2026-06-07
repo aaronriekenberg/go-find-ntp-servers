@@ -200,39 +200,37 @@ func findNTPServers() <-chan resolvedServerMessage {
 	return resolvedServerMessageChannel
 }
 
-func duplicateServerAddressCheck() func(resolvedServerMessage) (duplicate bool) {
+func duplicateServerCheck() func(resolvedServerMessage) (duplicate bool) {
 
-	ipAddrToServerNames := make(map[string][]string)
+	if !*queryNTS {
 
-	return func(
-		message resolvedServerMessage,
-	) (duplicate bool) {
+		ipAddrToServerNames := make(map[string][]string)
 
-		serverNamesForIPAddr := append(ipAddrToServerNames[message.IPAddr], message.ServerName)
-		ipAddrToServerNames[message.IPAddr] = serverNamesForIPAddr
+		return func(
+			message resolvedServerMessage,
+		) (duplicate bool) {
+			serverNamesForIPAddr := append(ipAddrToServerNames[message.IPAddr], message.ServerName)
+			ipAddrToServerNames[message.IPAddr] = serverNamesForIPAddr
 
-		numServerNamesForIPAddr := len(serverNamesForIPAddr)
-		if numServerNamesForIPAddr > 1 {
-			slog.Info("found duplicate server IP address",
-				"ipAddress", message.IPAddr,
-				"numServerNamesForIPAddr", numServerNamesForIPAddr,
-				"serverNames", serverNamesForIPAddr,
-			)
-			duplicateServerIPs.Add(1)
-			duplicate = true
+			numServerNamesForIPAddr := len(serverNamesForIPAddr)
+			if numServerNamesForIPAddr > 1 {
+				slog.Info("found duplicate server IP address",
+					"ipAddress", message.IPAddr,
+					"numServerNamesForIPAddr", numServerNamesForIPAddr,
+					"serverNames", serverNamesForIPAddr,
+				)
+				duplicateServerIPs.Add(1)
+				duplicate = true
+			}
+			return
 		}
-		return
 	}
-}
-
-func duplicateNTSServerNamesCheck() func(resolvedServerMessage) (duplicate bool) {
 
 	seenNTSServerNames := make(map[string]bool)
 
 	return func(
 		message resolvedServerMessage,
 	) (duplicate bool) {
-
 		if found := seenNTSServerNames[message.ServerName]; found {
 			slog.Info("found duplicate NTS server name",
 				"serverName", message.ServerName,
@@ -268,18 +266,13 @@ func queryNTPServers(
 		}
 	})
 
-	isDuplicateServerAddress := duplicateServerAddressCheck()
-	isDuplicateNTSServerName := duplicateNTSServerNamesCheck()
+	isDuplicateServer := duplicateServerCheck()
 
 	querySemaphore := newSemaphore(*maxParallelNTPRequests)
 
 	var queryWG sync.WaitGroup
 	for message := range resolvedServerMessageChannel {
-		if *queryNTS && isDuplicateNTSServerName(message) {
-			continue
-		}
-
-		if isDuplicateServerAddress(message) {
+		if isDuplicateServer(message) {
 			continue
 		}
 
