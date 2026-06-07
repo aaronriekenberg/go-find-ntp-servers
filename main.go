@@ -269,10 +269,6 @@ func queryNTPServers(
 
 			ntpQueries.Add(1)
 
-			queryOptions := ntp.QueryOptions{
-				Timeout: *ntpQueryTimeout,
-			}
-
 			var (
 				response *ntp.Response
 				err      error
@@ -288,9 +284,18 @@ func queryNTPServers(
 					ntpErrors.Add(1)
 					return
 				}
-				response, err = ntsSession.QueryWithOptions(&queryOptions)
+				response, err = ntsSession.QueryWithOptions(
+					&ntp.QueryOptions{
+						Timeout: *ntpQueryTimeout,
+					},
+				)
 			} else {
-				response, err = ntp.QueryWithOptions(message.IPAddr, queryOptions)
+				response, err = ntp.QueryWithOptions(
+					message.IPAddr,
+					ntp.QueryOptions{
+						Timeout: *ntpQueryTimeout,
+					},
+				)
 			}
 
 			if err != nil {
