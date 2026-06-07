@@ -136,11 +136,28 @@ type resolvedServerMessage struct {
 func findNTPServers() <-chan resolvedServerMessage {
 	serverNames := readServerNames()
 
+	if *queryNTS {
+		slog.Debug("querying NTS servers, skipping DNS resolution",
+			"numServerNames", len(serverNames),
+		)
+		resolvedServerMessageChannel := make(
+			chan resolvedServerMessage,
+			len(serverNames),
+		)
+		for _, serverName := range serverNames {
+			resolvedServerMessageChannel <- resolvedServerMessage{
+				ServerName: serverName,
+				IPAddr:     "",
+			}
+		}
+		close(resolvedServerMessageChannel)
+		return resolvedServerMessageChannel
+	}
+
 	resolvedServerMessageChannel := make(
 		chan resolvedServerMessage,
 		(*maxParallelDNSRequests)*ipAddressesPerServerName,
 	)
-
 	go func() {
 
 		defer close(resolvedServerMessageChannel)
