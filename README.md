@@ -6,34 +6,35 @@ Use `-queryNTS=true` to query servers with Network Time Security (NTS). The defa
 
 Example:
 ```
-$ go-find-ntp-servers | tail -2 | jq
-
+$ go-find-ntp-servers  -queryNTS=true | tail -2 | jq
 {
-  "time": "2026-03-27T05:38:19.553329923-05:00",
+  "time": "2026-06-07T13:09:07.452646587-05:00",
   "level": "INFO",
   "msg": "ntpServerResponse",
-  "serverName": "time3.facebook.com",
-  "ipAddr": "129.134.25.123",
+  "serverName": "ntp1.wiktel.com",
+  "ipAddr": "69.89.207.99",
   "stratum": 1,
-  "rawReferenceID": "0x4D535031",
-  "parsedReferenceID": "MSP1",
-  "clockOffset": "303.003µs",
-  "precision": "0s",
+  "rawReferenceID": "0x50505300",
+  "parsedReferenceID": "PPS\u0000",
+  "clockOffset": "1.404497ms",
+  "precision": "119ns",
   "rootDelay": "0s",
-  "rootDispersion": "15.259µs",
-  "rtt": "9.810333ms",
-  "rootDistance": "4.920425ms"
+  "rootDispersion": "1.052856ms",
+  "rtt": "24.021352ms",
+  "rootDistance": "13.063532ms",
+  "usedNTS": true
 }
 {
-  "time": "2026-03-27T05:38:19.553360765-05:00",
+  "time": "2026-06-07T13:09:07.452681253-05:00",
   "level": "INFO",
   "msg": "metrics",
-  "dnsQueries": 19,
+  "dnsQueries": 8,
   "dnsErrors": 0,
-  "dnsFilteredResults": 27,
-  "dnsUnfilteredResults": 41,
+  "dnsFilteredResults": 9,
+  "dnsUnfilteredResults": 9,
   "duplicateServerIPs": 0,
-  "ntpQueries": 41,
+  "duplicateNTSServerNames": 1,
+  "ntpQueries": 8,
   "ntpErrors": 0
 }
 ```
