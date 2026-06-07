@@ -6,34 +6,34 @@ Use `-queryNTS=true` to query servers with Network Time Security (NTS). The defa
 
 Example:
 ```
-$ go-find-ntp-servers  -queryNTS=true | tail -2 | jq
+$ go-find-ntp-servers -queryNTS=true | tail -2 | jq
 {
-  "time": "2026-06-07T13:09:07.452646587-05:00",
+  "time": "2026-06-07T15:26:05.150722498-05:00",
   "level": "INFO",
   "msg": "ntpServerResponse",
-  "serverName": "ntp1.wiktel.com",
-  "ipAddr": "69.89.207.99",
+  "serverName": "ntp2.wiktel.com",
+  "ipAddr": "",
   "stratum": 1,
-  "rawReferenceID": "0x50505300",
-  "parsedReferenceID": "PPS\u0000",
-  "clockOffset": "1.404497ms",
+  "rawReferenceID": "0x47505300",
+  "parsedReferenceID": "GPS\u0000",
+  "clockOffset": "1.577024ms",
   "precision": "119ns",
   "rootDelay": "0s",
-  "rootDispersion": "1.052856ms",
-  "rtt": "24.021352ms",
-  "rootDistance": "13.063532ms",
+  "rootDispersion": "1.00708ms",
+  "rtt": "24.802577ms",
+  "rootDistance": "13.408368ms",
   "usedNTS": true
 }
 {
-  "time": "2026-06-07T13:09:07.452681253-05:00",
+  "time": "2026-06-07T15:26:05.150740059-05:00",
   "level": "INFO",
   "msg": "metrics",
-  "dnsQueries": 8,
+  "dnsQueries": 0,
   "dnsErrors": 0,
-  "dnsFilteredResults": 9,
-  "dnsUnfilteredResults": 9,
+  "dnsFilteredResults": 0,
+  "dnsUnfilteredResults": 0,
   "duplicateServerIPs": 0,
-  "duplicateNTSServerNames": 1,
+  "duplicateNTSServerNames": 0,
   "ntpQueries": 8,
   "ntpErrors": 0
 }
