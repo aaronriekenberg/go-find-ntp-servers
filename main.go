@@ -239,7 +239,10 @@ func queryNTPServers(
 	})
 
 	isDuplicateServerAddress := duplicateServerAddressCheck()
-	seenServerNames := make(map[string]struct{})
+	var seenServerNames map[string]struct{}
+	if *queryNTS {
+		seenServerNames = make(map[string]struct{})
+	}
 
 	querySemaphore := newSemaphore(*maxParallelNTPRequests)
 
@@ -276,11 +279,11 @@ func queryNTPServers(
 			)
 
 			if *queryNTS {
-				ntsSession, sessionErr := nts.NewSession(message.ServerName)
-				if sessionErr != nil {
+				ntsSession, err := nts.NewSession(message.ServerName)
+				if err != nil {
 					slog.Error("nts.NewSession error",
 						"message", message,
-						"err", sessionErr,
+						"err", err,
 					)
 					ntpErrors.Add(1)
 					return
