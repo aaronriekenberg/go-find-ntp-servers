@@ -19,6 +19,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/beevik/ntp"
+	"github.com/beevik/nts"
 )
 
 const (
@@ -31,6 +32,7 @@ var (
 	maxParallelDNSRequests = flag.Int("maxParallelDNSRequests", 2, "max parallel DNS requests")
 	maxParallelNTPRequests = flag.Int("maxParallelNTPRequests", 8, "max parallel NTP requests")
 	ntpQueryTimeout        = flag.Duration("ntpQueryTimeout", 1*time.Second, "NTP query timeout duration")
+	queryNTS               = flag.Bool("queryNTS", false, "query servers using NTS")
 	slogLevel              slog.Level
 )
 
@@ -256,17 +258,30 @@ func queryNTPServers(
 
 			ntpQueries.Add(1)
 
-			response, err := ntp.QueryWithOptions(
-				message.IPAddr,
-				ntp.QueryOptions{
-					Timeout: *ntpQueryTimeout,
-				},
+			queryOptions := ntp.QueryOptions{
+				Timeout: *ntpQueryTimeout,
+			}
+
+			var (
+				response *ntp.Response
+				err      error
 			)
 
+			if *queryNTS {
+				var ntsSession *nts.Session
+				ntsSession, err = nts.NewSession(message.ServerName)
+				if err == nil {
+					response, err = ntsSession.QueryWithOptions(&queryOptions)
+				}
+			} else {
+				response, err = ntp.QueryWithOptions(message.IPAddr, queryOptions)
+			}
+
 			if err != nil {
-				slog.Error("ntp.Query error",
+				slog.Error("NTP query error",
 					"message", message,
 					"err", err,
+					"queryNTS", *queryNTS,
 				)
 				ntpErrors.Add(1)
 
