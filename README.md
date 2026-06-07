@@ -6,7 +6,7 @@ Use `-queryNTS=true` to query servers with Network Time Security (NTS). The defa
 
 Examples:
 ```
-$ ./go-find-ntp-servers | tail -2 | jq
+$ go-find-ntp-servers | tail -2 | jq
 {
   "time": "2026-06-07T15:27:36.584614441-05:00",
   "level": "INFO",
