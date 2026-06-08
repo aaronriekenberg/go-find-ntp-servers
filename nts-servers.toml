@@ -1,3 +1,4 @@
+# from https://github.com/jauderho/nts-servers
 servers = [
     "time.cloudflare.com",
     "1.ntp.ubuntu.com",
