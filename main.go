@@ -217,32 +217,30 @@ func findNTPServers() <-chan resolvedServerMessage {
 	return resolvedServerMessageChannel
 }
 
-func duplicateServerCheck() func(resolvedServerMessage) (duplicate bool) {
+func duplicateNTPServerCheck() func(resolvedServerMessage) (duplicate bool) {
+	ipAddrToServerNames := make(map[string][]string)
 
-	if !*queryNTS {
+	return func(
+		message resolvedServerMessage,
+	) (duplicate bool) {
+		serverNamesForIPAddr := append(ipAddrToServerNames[message.IPAddr], message.ServerName)
+		ipAddrToServerNames[message.IPAddr] = serverNamesForIPAddr
 
-		ipAddrToServerNames := make(map[string][]string)
-
-		return func(
-			message resolvedServerMessage,
-		) (duplicate bool) {
-			serverNamesForIPAddr := append(ipAddrToServerNames[message.IPAddr], message.ServerName)
-			ipAddrToServerNames[message.IPAddr] = serverNamesForIPAddr
-
-			numServerNamesForIPAddr := len(serverNamesForIPAddr)
-			if numServerNamesForIPAddr > 1 {
-				slog.Info("found duplicate server IP address",
-					"ipAddress", message.IPAddr,
-					"numServerNamesForIPAddr", numServerNamesForIPAddr,
-					"serverNames", serverNamesForIPAddr,
-				)
-				duplicateServerIPs.Add(1)
-				duplicate = true
-			}
-			return
+		numServerNamesForIPAddr := len(serverNamesForIPAddr)
+		if numServerNamesForIPAddr > 1 {
+			slog.Info("found duplicate server IP address",
+				"ipAddress", message.IPAddr,
+				"numServerNamesForIPAddr", numServerNamesForIPAddr,
+				"serverNames", serverNamesForIPAddr,
+			)
+			duplicateServerIPs.Add(1)
+			duplicate = true
 		}
+		return
 	}
+}
 
+func duplicateNTSServerCheck() func(resolvedServerMessage) (duplicate bool) {
 	seenNTSServerNames := make(map[string]bool)
 
 	return func(
@@ -260,6 +258,16 @@ func duplicateServerCheck() func(resolvedServerMessage) (duplicate bool) {
 		}
 		return
 	}
+}
+
+func duplicateServerCheck() func(resolvedServerMessage) (duplicate bool) {
+
+	if *queryNTS {
+
+		return duplicateNTSServerCheck()
+	}
+
+	return duplicateNTPServerCheck()
 }
 
 // fields are exported to work with slog
