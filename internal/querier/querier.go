@@ -7,6 +7,7 @@ import (
 	"net"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/aaronriekenberg/go-find-ntp-servers/internal/finder"
 	"github.com/aaronriekenberg/go-find-ntp-servers/internal/semaphore"
@@ -84,8 +85,14 @@ func QueryNTPServers(
 	resolvedServerChannel <-chan finder.ResolvedServer,
 	queryNTS bool,
 	maxParallelNTPRequests int,
-	ntpQueryOptions ntp.QueryOptions,
+	ntpQueryTimeout time.Duration,
 ) (responses []NTPServerResponse) {
+
+	slog.Info("QueryNTPServers starting",
+		"queryNTS", queryNTS,
+		"maxParallelNTPRequests", maxParallelNTPRequests,
+		"ntpQueryTimeout", ntpQueryTimeout.String(),
+	)
 
 	responseChannel := make(chan NTPServerResponse, maxParallelNTPRequests)
 
@@ -131,11 +138,15 @@ func QueryNTPServers(
 					NTPErrors.Add(1)
 					return
 				}
-				response, err = ntsSession.QueryWithOptions(&ntpQueryOptions)
+				response, err = ntsSession.QueryWithOptions(&ntp.QueryOptions{
+					Timeout: ntpQueryTimeout,
+				})
 			} else {
 				response, err = ntp.QueryWithOptions(
 					message.IPAddr,
-					ntpQueryOptions,
+					ntp.QueryOptions{
+						Timeout: ntpQueryTimeout,
+					},
 				)
 			}
 

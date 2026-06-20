@@ -3,6 +3,7 @@ package main
 import (
 	"cmp"
 	"flag"
+	"fmt"
 	"log/slog"
 	"os"
 	"runtime/debug"
@@ -12,7 +13,6 @@ import (
 
 	"github.com/aaronriekenberg/go-find-ntp-servers/internal/finder"
 	"github.com/aaronriekenberg/go-find-ntp-servers/internal/querier"
-	"github.com/beevik/ntp"
 )
 
 // flags
@@ -119,6 +119,9 @@ func main() {
 			slog.Error("panic in main",
 				"error", err,
 			)
+
+			fmt.Fprintf(os.Stderr, "stack trace:\n%v", string(debug.Stack()))
+
 			os.Exit(1)
 		}
 	}()
@@ -141,9 +144,7 @@ func main() {
 		resolvedServers,
 		*queryNTS,
 		*maxParallelNTPRequests,
-		ntp.QueryOptions{
-			Timeout: *ntpQueryTimeout,
-		},
+		*ntpQueryTimeout,
 	)
 
 	logResults(responses)
