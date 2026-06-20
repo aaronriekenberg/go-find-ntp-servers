@@ -88,7 +88,7 @@ func QueryNTPServers(
 	ntpQueryTimeout time.Duration,
 ) (responses []NTPServerResponse) {
 
-	slog.Info("QueryNTPServers starting",
+	slog.Debug("QueryNTPServers starting",
 		"queryNTS", queryNTS,
 		"maxParallelNTPRequests", maxParallelNTPRequests,
 		"ntpQueryTimeout", ntpQueryTimeout.String(),
