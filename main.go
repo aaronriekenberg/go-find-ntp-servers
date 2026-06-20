@@ -82,12 +82,13 @@ func readServerNames() []string {
 		panic(fmt.Errorf("readServerNames: os.Executable error: %w", err))
 	}
 
-	var serverFilePath string
+	var serversFileName string
 	if *queryNTS {
-		serverFilePath = path.Join(filepath.Dir(executablePath), ntsServersFileName)
+		serversFileName = ntsServersFileName
 	} else {
-		serverFilePath = path.Join(filepath.Dir(executablePath), ntpServersFileName)
+		serversFileName = ntpServersFileName
 	}
+	serverFilePath := path.Join(filepath.Dir(executablePath), serversFileName)
 
 	slog.Debug("readServerNames",
 		"serverFilePath", serverFilePath,
