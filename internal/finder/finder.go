@@ -35,7 +35,7 @@ type ResolvedServer struct {
 	IPAddr     string
 }
 
-func ReadServerNames(queryNTS bool) []string {
+func readServerNames(queryNTS bool) []string {
 	const ntpServersFileName = "ntp-servers.toml"
 	const ntsServersFileName = "nts-servers.toml"
 
@@ -75,7 +75,7 @@ func FindNTPServers(
 	filterDNSToIPV4Only bool,
 	maxParallelDNSRequests int,
 ) <-chan ResolvedServer {
-	serverNames := ReadServerNames(queryNTS)
+	serverNames := readServerNames(queryNTS)
 
 	if queryNTS {
 		slog.Debug("querying NTS servers, skipping DNS resolution",
