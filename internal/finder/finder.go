@@ -11,6 +11,7 @@ import (
 	"sync/atomic"
 
 	"github.com/BurntSushi/toml"
+	"github.com/aaronriekenberg/go-find-ntp-servers/internal/semaphore"
 )
 
 const (
@@ -32,27 +33,6 @@ var (
 type ResolvedServer struct {
 	ServerName string
 	IPAddr     string
-}
-
-type semaphore chan struct{}
-
-func newSemaphore(permits int) semaphore {
-	if permits < 1 {
-		panic("newSemaphore: permits must be >= 1")
-	}
-	s := make(chan struct{}, permits)
-	for range permits {
-		s <- struct{}{}
-	}
-	return s
-}
-
-func (s semaphore) acquire() {
-	<-s
-}
-
-func (s semaphore) release() {
-	s <- struct{}{}
 }
 
 func ReadServerNames(queryNTS bool) []string {
@@ -119,15 +99,15 @@ func FindNTPServers(
 	go func() {
 		defer close(resolvedServerChannel)
 
-		querySemaphore := newSemaphore(maxParallelDNSRequests)
+		querySemaphore := semaphore.New(maxParallelDNSRequests)
 
 		var queryWG sync.WaitGroup
 		defer queryWG.Wait()
 
 		for _, serverName := range serverNames {
-			querySemaphore.acquire()
+			querySemaphore.Acquire()
 			queryWG.Go(func() {
-				defer querySemaphore.release()
+				defer querySemaphore.Release()
 
 				slog.Debug("resolving server",
 					"serverName", serverName,

@@ -9,6 +9,7 @@ import (
 	"sync/atomic"
 
 	"github.com/aaronriekenberg/go-find-ntp-servers/internal/finder"
+	"github.com/aaronriekenberg/go-find-ntp-servers/internal/semaphore"
 	"github.com/beevik/ntp"
 	"github.com/beevik/nts"
 )
@@ -30,27 +31,6 @@ type NTPServerResponse struct {
 	IPAddr      string
 	NTPResponse *ntp.Response
 	UsedNTS     bool
-}
-
-type semaphore chan struct{}
-
-func newSemaphore(permits int) semaphore {
-	if permits < 1 {
-		panic("newSemaphore: permits must be >= 1")
-	}
-	s := make(chan struct{}, permits)
-	for range permits {
-		s <- struct{}{}
-	}
-	return s
-}
-
-func (s semaphore) acquire() {
-	<-s
-}
-
-func (s semaphore) release() {
-	s <- struct{}{}
 }
 
 func duplicateNTPServerCheck() func(finder.ResolvedServer) (duplicate bool) {
@@ -118,7 +98,7 @@ func QueryNTPServers(
 
 	isDuplicateServer := duplicateServerCheck(queryNTS)
 
-	querySemaphore := newSemaphore(maxParallelNTPRequests)
+	querySemaphore := semaphore.New(maxParallelNTPRequests)
 
 	var queryWG sync.WaitGroup
 	for message := range resolvedServerChannel {
@@ -126,9 +106,9 @@ func QueryNTPServers(
 			continue
 		}
 
-		querySemaphore.acquire()
+		querySemaphore.Acquire()
 		queryWG.Go(func() {
-			defer querySemaphore.release()
+			defer querySemaphore.Release()
 
 			slog.Debug("QueryNTPServers received message",
 				"message", message,
