@@ -4,8 +4,8 @@ github.com/aead/cmac v0.0.0-20160719120800-7af84192f0b1 h1:+JkXLHME8vLJafGhOH4ao
 github.com/aead/cmac v0.0.0-20160719120800-7af84192f0b1/go.mod h1:nuudZmJhzWtx2212z+pkuy7B6nkBqa+xwNXZHL1j8cg=
 github.com/beevik/ntp v1.5.0 h1:y+uj/JjNwlY2JahivxYvtmv4ehfi3h74fAuABB9ZSM4=
 github.com/beevik/ntp v1.5.0/go.mod h1:mJEhBrwT76w9D+IfOEGvuzyuudiW9E52U2BaTrMOYow=
-github.com/beevik/nts v0.3.0 h1:d3kfEtiE45gu9pf/MabhX5Ti24cFQwASPy8cPmDK1ZA=
-github.com/beevik/nts v0.3.0/go.mod h1:PsbzM+nBJv639oFfcsTmD5gyVYtcnaCRSAGKZbwkjHg=
+github.com/beevik/nts v0.3.1 h1:LOOhAA13CWM7mKikm/p77IQG2zXVc+vz5gLXzSuBSyA=
+github.com/beevik/nts v0.3.1/go.mod h1:XTn2edBO9zN6dCYMBWWn4FlVDEzdJ1xvl8AJtalCt9w=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
