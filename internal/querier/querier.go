@@ -165,6 +165,16 @@ func QueryNTPServers(
 				"response", response,
 			)
 
+			if response == nil {
+				slog.Error("NTP query returned nil response",
+					"message", message,
+					"queryNTS", queryNTS,
+					"err", err,
+				)
+				NTPErrors.Add(1)
+				return
+			}
+
 			responseChannel <- NTPServerResponse{
 				ServerName:  message.ServerName,
 				IPAddr:      message.IPAddr,
