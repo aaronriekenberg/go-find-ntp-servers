@@ -88,7 +88,8 @@ func queryOneNTPServer(
 
 	if queryNTS {
 		var ntsSession *nts.Session
-		ntsSession, err = nts.NewSessionWithOptions(messagge.ServerName,
+		ntsSession, err = nts.NewSessionWithOptions(
+			messagge.ServerName,
 			&nts.SessionOptions{
 				Timeout: ntpQueryTimeout,
 			},
