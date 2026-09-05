@@ -97,9 +97,11 @@ func queryOneNTPServer(
 		if err != nil {
 			return
 		}
-		response, err = ntsSession.QueryWithOptions(&ntp.QueryOptions{
-			Timeout: ntpQueryTimeout,
-		})
+		response, err = ntsSession.QueryWithOptions(
+			&ntp.QueryOptions{
+				Timeout: ntpQueryTimeout,
+			},
+		)
 	} else {
 		response, err = ntp.QueryWithOptions(
 			messagge.IPAddr,
