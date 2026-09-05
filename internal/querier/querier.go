@@ -80,6 +80,36 @@ func duplicateServerCheck(queryNTS bool) func(finder.ResolvedServer) (duplicate 
 	return duplicateNTPServerCheck()
 }
 
+func queryOneNTPServer(
+	messagge finder.ResolvedServer,
+	queryNTS bool,
+	ntpQueryTimeout time.Duration,
+) (response *ntp.Response, err error) {
+
+	if queryNTS {
+		var ntsSession *nts.Session
+		ntsSession, err = nts.NewSessionWithOptions(messagge.ServerName,
+			&nts.SessionOptions{
+				Timeout: ntpQueryTimeout,
+			},
+		)
+		if err != nil {
+			return
+		}
+		response, err = ntsSession.QueryWithOptions(&ntp.QueryOptions{
+			Timeout: ntpQueryTimeout,
+		})
+	} else {
+		response, err = ntp.QueryWithOptions(
+			messagge.IPAddr,
+			ntp.QueryOptions{
+				Timeout: ntpQueryTimeout,
+			},
+		)
+	}
+	return
+}
+
 // QueryNTPServers concurrently queries all resolved servers and returns the responses.
 func QueryNTPServers(
 	resolvedServerChannel <-chan finder.ResolvedServer,
@@ -123,37 +153,7 @@ func QueryNTPServers(
 
 			NTPQueries.Add(1)
 
-			var (
-				response *ntp.Response
-				err      error
-			)
-
-			if queryNTS {
-				var ntsSession *nts.Session
-				ntsSession, err = nts.NewSessionWithOptions(message.ServerName,
-					&nts.SessionOptions{
-						Timeout: ntpQueryTimeout,
-					},
-				)
-				if err != nil {
-					slog.Error("nts.NewSession error",
-						"message", message,
-						"err", err,
-					)
-					NTPErrors.Add(1)
-					return
-				}
-				response, err = ntsSession.QueryWithOptions(&ntp.QueryOptions{
-					Timeout: ntpQueryTimeout,
-				})
-			} else {
-				response, err = ntp.QueryWithOptions(
-					message.IPAddr,
-					ntp.QueryOptions{
-						Timeout: ntpQueryTimeout,
-					},
-				)
-			}
+			response, err := queryOneNTPServer(message, queryNTS, ntpQueryTimeout)
 
 			if err != nil {
 				slog.Error("NTP query error",
