@@ -129,7 +129,12 @@ func QueryNTPServers(
 			)
 
 			if queryNTS {
-				ntsSession, err := nts.NewSession(message.ServerName)
+				var ntsSession *nts.Session
+				ntsSession, err = nts.NewSessionWithOptions(message.ServerName,
+					&nts.SessionOptions{
+						Timeout: ntpQueryTimeout,
+					},
+				)
 				if err != nil {
 					slog.Error("nts.NewSession error",
 						"message", message,
@@ -164,16 +169,6 @@ func QueryNTPServers(
 				"message", message,
 				"response", response,
 			)
-
-			if response == nil {
-				slog.Error("NTP query returned nil response",
-					"message", message,
-					"queryNTS", queryNTS,
-					"err", err,
-				)
-				NTPErrors.Add(1)
-				return
-			}
 
 			responseChannel <- NTPServerResponse{
 				ServerName:  message.ServerName,
