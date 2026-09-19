@@ -103,9 +103,9 @@ func buildInfoMap() map[string]string {
 	if buildInfo, ok := debug.ReadBuildInfo(); ok {
 		buildInfoMap["GoVersion"] = buildInfo.GoVersion
 		for _, setting := range buildInfo.Settings {
-			if strings.HasPrefix(setting.Key, "GO") ||
-				strings.HasPrefix(setting.Key, "vcs") ||
-				strings.HasPrefix(setting.Key, "CGO") {
+			if strings.HasPrefix(setting.Key, "CGO") ||
+				strings.HasPrefix(setting.Key, "GO") ||
+				strings.HasPrefix(setting.Key, "vcs") {
 				buildInfoMap[setting.Key] = setting.Value
 			}
 		}
