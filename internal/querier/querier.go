@@ -1,6 +1,7 @@
 package querier
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"log/slog"
@@ -196,7 +197,7 @@ func ParseReferenceID(resp NTPServerResponse) (rawString string, parsedString st
 	referenceIDBytes := binary.BigEndian.AppendUint32(nil, resp.NTPResponse.ReferenceID)
 
 	if resp.NTPResponse.Stratum <= 1 {
-		parsedString = string(referenceIDBytes)
+		parsedString = string(bytes.Trim(referenceIDBytes, "\x00"))
 		return
 	}
 
