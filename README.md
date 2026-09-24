@@ -38,7 +38,7 @@ go-find-ntp-servers | tail -2 | jq
   "ntpErrors": 0
 }
 
-$ go-find-ntp-servers  -queryNTS       | tail -2 | jq
+$ go-find-ntp-servers  -queryNTS | tail -2 | jq
 {
   "time": "2026-09-24T05:25:29.385275604-05:00",
   "level": "INFO",
