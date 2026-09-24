@@ -6,9 +6,9 @@ Use `-queryNTS=true` to query servers with Network Time Security (NTS). The defa
 
 Examples:
 ```
-$ go-find-ntp-servers | tail -2 | jq
+go-find-ntp-servers | tail -2 | jq
 {
-  "time": "2026-06-07T15:27:36.584614441-05:00",
+  "time": "2026-09-24T05:25:11.850695713-05:00",
   "level": "INFO",
   "msg": "ntpServerResponse",
   "serverName": "time3.facebook.com",
@@ -16,48 +16,48 @@ $ go-find-ntp-servers | tail -2 | jq
   "stratum": 1,
   "rawReferenceID": "0x4D535031",
   "parsedReferenceID": "MSP1",
-  "clockOffset": "-1.292511ms",
+  "clockOffset": "1.320508ms",
   "precision": "0s",
   "rootDelay": "0s",
   "rootDispersion": "15.259µs",
-  "rtt": "9.908813ms",
-  "rootDistance": "4.969665ms",
+  "rtt": "7.376846ms",
+  "rootDistance": "3.703682ms",
   "usedNTS": false
 }
 {
-  "time": "2026-06-07T15:27:36.584626122-05:00",
+  "time": "2026-09-24T05:25:11.850715764-05:00",
   "level": "INFO",
   "msg": "metrics",
   "dnsQueries": 19,
   "dnsErrors": 0,
-  "dnsFilteredResults": 26,
+  "dnsFilteredResults": 27,
   "dnsUnfilteredResults": 41,
-  "duplicateServerIPs": 0,
+  "duplicateServerIPs": 1,
   "duplicateNTSServerNames": 0,
-  "ntpQueries": 41,
+  "ntpQueries": 40,
   "ntpErrors": 0
 }
 
-$ go-find-ntp-servers -queryNTS=true | tail -2 | jq
+$ go-find-ntp-servers  -queryNTS       | tail -2 | jq
 {
-  "time": "2026-06-07T15:26:05.150722498-05:00",
+  "time": "2026-09-24T05:25:29.385275604-05:00",
   "level": "INFO",
   "msg": "ntpServerResponse",
-  "serverName": "ntp2.wiktel.com",
+  "serverName": "time2.mbix.ca",
   "ipAddr": "",
   "stratum": 1,
-  "rawReferenceID": "0x47505300",
-  "parsedReferenceID": "GPS\u0000",
-  "clockOffset": "1.577024ms",
+  "rawReferenceID": "0x50505300",
+  "parsedReferenceID": "PPS",
+  "clockOffset": "190.701µs",
   "precision": "119ns",
   "rootDelay": "0s",
-  "rootDispersion": "1.00708ms",
-  "rtt": "24.802577ms",
-  "rootDistance": "13.408368ms",
+  "rootDispersion": "1.037598ms",
+  "rtt": "13.326302ms",
+  "rootDistance": "7.700749ms",
   "usedNTS": true
 }
 {
-  "time": "2026-06-07T15:26:05.150740059-05:00",
+  "time": "2026-09-24T05:25:29.385285304-05:00",
   "level": "INFO",
   "msg": "metrics",
   "dnsQueries": 0,
@@ -66,7 +66,7 @@ $ go-find-ntp-servers -queryNTS=true | tail -2 | jq
   "dnsUnfilteredResults": 0,
   "duplicateServerIPs": 0,
   "duplicateNTSServerNames": 0,
-  "ntpQueries": 8,
-  "ntpErrors": 0
+  "ntpQueries": 20,
+  "ntpErrors": 1
 }
 ```
