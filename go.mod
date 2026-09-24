@@ -4,8 +4,8 @@ go 1.27.1
 
 require (
 	github.com/BurntSushi/toml v1.6.0
-	github.com/beevik/ntp v1.5.0
-	github.com/beevik/nts v0.3.2
+	github.com/beevik/ntp v1.6.0
+	github.com/beevik/nts v0.3.3
 )
 
 require (
