@@ -15,9 +15,11 @@ servers = [
     "oregon.time.system76.com",
     "virginia.time.system76.com",
     "stratum1.time.cifelli.xyz",
+    "time-gps.globalentry.systems",
     "time.cifelli.xyz",
     "time.txryan.com",
     "ntp1.wiktel.com",
     "ntp2.wiktel.com",
+    "time.globalentry.systems",
     "time.xargs.org",
 ]
