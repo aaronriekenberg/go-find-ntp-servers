@@ -20,6 +20,7 @@ servers = [
     "time.txryan.com",
     "ntp1.wiktel.com",
     "ntp2.wiktel.com",
+    "nts.dogporkcow.com",
     "time.globalentry.systems",
     "time.xargs.org",
 ]
