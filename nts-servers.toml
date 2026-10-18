@@ -1,14 +1,19 @@
 # from https://github.com/jauderho/nts-servers
 servers = [
+    # All
     "time.cloudflare.com",
+    "any.time.nl",
+    # Distribution
     "1.ntp.ubuntu.com",
     "2.ntp.ubuntu.com",
     "3.ntp.ubuntu.com",
     "4.ntp.ubuntu.com",
+    # Canada
     "time1.mbix.ca",
     "time2.mbix.ca",
     "time3.mbix.ca",
     "time.web-clock.ca",
+    # US
     "nts.amethyst.name",
     "ntp1.glypnod.com",
     "ohio.time.system76.com",
@@ -20,6 +25,7 @@ servers = [
     "time.txryan.com",
     "ntp1.wiktel.com",
     "ntp2.wiktel.com",
+    # VM Sources in US
     "nts.dogporkcow.com",
     "time.globalentry.systems",
     "time.xargs.org",
