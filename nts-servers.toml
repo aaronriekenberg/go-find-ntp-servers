@@ -22,6 +22,7 @@ servers = [
     "stratum1.time.cifelli.xyz",
     "time-gps.globalentry.systems",
     "time.cifelli.xyz",
+    "time.sshlab.net",
     "time.txryan.com",
     "ntp1.wiktel.com",
     "ntp2.wiktel.com",
