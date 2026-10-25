@@ -27,6 +27,7 @@ servers = [
     "ntp1.wiktel.com",
     "ntp2.wiktel.com",
     # VM Sources in US
+    "ntp-us.aki.quest",
     "nts.dogporkcow.com",
     "time.globalentry.systems",
     "time.xargs.org",
