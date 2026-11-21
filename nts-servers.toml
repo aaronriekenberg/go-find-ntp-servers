@@ -3,6 +3,7 @@ servers = [
     # All
     "time.cloudflare.com",
     "any.time.nl",
+    "nts.meta.com",
     # Distribution
     "1.ntp.ubuntu.com",
     "2.ntp.ubuntu.com",
